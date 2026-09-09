@@ -1,0 +1,38 @@
+Screen,Where it appears,English text,Assamese,Notes
+App,Name shown in phone's app switcher,Smriti,,"App names are often left as-is, but flag for the team to decide"
+Home,Title bar,Smriti,,
+Home,Button,Games,,
+Home,Button,Reminders,,
+Home,Button,Settings,,
+Games list,Title bar,Games,,
+Games list,Button,Memory Match,,
+Games list,Button,Pattern & Voice,,
+Memory Match,Title bar,Memory Match,,
+Memory Match,Progress line above the board,Pairs found: {count} of {total} . Level {tier},,"{count} {total} {tier} are numbers that change live - translate only the surrounding words, keep the {curly brace} parts exactly as they are"
+Memory Match,Win pop-up title,Well done!,,
+Memory Match,Win pop-up message,"You found all {pairs} pairs. Attempts: {attempts} Accuracy: {percent}%",,"{pairs} {attempts} {percent} are numbers - same rule as above"
+Memory Match,Win pop-up button,Play again,,
+Pattern & Voice,Title bar,Pattern & Voice,,
+Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Flower,,"Important: must match how a real Assamese speaker would actually say this word, since speech recognition compares against it"
+Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Umbrella,,Same as above
+Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Bird,,Same as above
+Pattern & Voice,Question spoken aloud by the app,What is this?,,This is spoken by text-to-speech, not just displayed
+Pattern & Voice,Progress line,Round {n} of {total},,"{n} {total} are numbers - translate only the surrounding words"
+Pattern & Voice,Label above the microphone button,or answer by voice:,,
+Pattern & Voice,Feedback spoken aloud by the app,Correct!,,Spoken by text-to-speech
+Pattern & Voice,Feedback spoken aloud by the app,Not quite.,,Spoken by text-to-speech
+Pattern & Voice,Feedback shown on screen,Correct!,,"Displayed text - separate from the spoken version above, translate independently"
+Pattern & Voice,Feedback shown on screen,Not quite - next one,,Displayed text
+Pattern & Voice,Message shown if the phone has no voice recognition,Voice input unavailable on this device - use the buttons above.,,
+Pattern & Voice,Win pop-up title,Well done!,,
+Pattern & Voice,Win pop-up message,You got {correct} of {total} correct.,,"{correct} {total} are numbers - translate only the surrounding words"
+Pattern & Voice,Win pop-up button,Done,,
+Reminders,Title bar,Reminders,,
+Reminders,Button,Set medicine reminder,,
+Reminders,Message shown when no reminders are set yet,No reminders yet,,
+Reminders,Confirmation pop-up after setting a reminder,Medicine reminder set for {time},,{time} is the chosen time - translate only the surrounding words
+Reminders,THE ACTUAL TEXT THAT POPS UP ON THE PHONE AS A REMINDER,Time to take your medicine,,"This is the single most important string in the whole list - it's the real reminder message the patient sees"
+Reminders,"Notification category name, visible only if someone opens the phone's own Settings app",Smriti Reminders,,Low visibility - fine to do last
+Reminders,"Notification category description, visible only in the phone's own Settings app",Medicine hydration and appointment reminders,,Low visibility - fine to do last
+Settings,Title bar,Settings,,
+Settings,Placeholder message,Settings coming soon,,
