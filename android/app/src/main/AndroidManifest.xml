@@ -4,8 +4,22 @@
     <!-- Lets a scheduled reminder survive the phone being switched off and on. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Needed for the reminder to fire at the exact time picked, not "roughly
-         around" that time — important for a medicine reminder specifically. -->
+         around" that time — important for a medicine reminder specifically.
+         This one requires the user to grant it via a Settings flow
+         (requestExactAlarmsPermission, called in NotificationService). -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- A newer, separate exact-alarm permission that's auto-granted at
+         install time (for apps not going through Play Store review) rather
+         than needing the user to flip a Settings toggle — kept alongside
+         SCHEDULE_EXACT_ALARM above as a more reliable backup path to the
+         same capability, not a replacement for it. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- Needed for the reminder notification's vibration pattern. -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <!-- Needed for fullScreenIntent notifications (wake the screen, show
+         over the lock screen) — the same delivery path alarm-clock apps
+         get, used for medicine reminders here for the same reason. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <!-- Needed for the Pattern & Voice game's speech recognition. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -40,6 +54,23 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- flutter_local_notifications does NOT declare these itself (its
+             own bundled manifest only has 2 permission lines) — without
+             them, AlarmManager has nowhere to actually deliver a scheduled
+             alarm's broadcast to, so it fires and gets silently dropped.
+             This was the real cause of reminders never posting: every
+             other fix tried (battery whitelist, exact-alarm permission,
+             Autostart) was irrelevant next to a broadcast with no receiver
+             to catch it. Copied from the plugin's own example app. -->
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

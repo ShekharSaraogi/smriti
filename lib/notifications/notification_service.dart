@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -9,11 +11,44 @@ class NotificationService {
   static final NotificationService instance =
       NotificationService._privateConstructor();
 
-  static const _channelId = 'smriti_reminders';
-  static const _channelName = 'Smriti Reminders';
+  // Bumped to v2: Android permanently locks in a channel's importance/
+  // sound/vibration settings from whenever that channel ID was FIRST
+  // created on a device, and silently ignores any later change to those
+  // settings for the same ID — only the user can change them by hand, in
+  // system Settings. The original channel may have been created early on
+  // (implicitly, with weaker defaults) before we ever set these
+  // explicitly. A new ID forces Android to create it fresh.
+  static const _channelId = 'smriti_reminders_v2';
+  static const _channelName = 'Smriti Medicine Reminders';
+  static const _channelDescription =
+      'Medicine, hydration and appointment reminders';
+
+  // A distinct buzz-pause-buzz pattern rather than one short vibration, so
+  // a medicine reminder is harder to sleep through than a generic ping.
+  static final Int64List _vibrationPattern = Int64List.fromList(
+    [0, 1000, 500, 1000, 500, 1000],
+  );
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
+
+  static NotificationDetails get _notificationDetails => NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: _channelDescription,
+          importance: Importance.max,
+          priority: Priority.high,
+          playSound: true,
+          enableVibration: true,
+          vibrationPattern: _vibrationPattern,
+          // Asks Android to wake the screen and show over the lock screen —
+          // the same delivery path alarm-clock and calling apps get, and a
+          // much stronger signal to the OS than a normal notification that
+          // this shouldn't be silently deferred by background restrictions.
+          fullScreenIntent: true,
+        ),
+      );
 
   // Sets up the notification plugin and the device's real timezone. Must
   // run once before scheduling anything. Safe to call more than once.
@@ -40,7 +75,16 @@ class NotificationService {
       final resolvedName = legacyTimezoneAliases[reportedName] ?? reportedName;
       tz.setLocalLocation(tz.getLocation(resolvedName));
     } catch (_) {
-      // Keep the default (UTC) location.
+      // Reported name didn't resolve to anything the timezone package
+      // recognizes. This app only ships in India for now, so defaulting to
+      // Asia/Kolkata is a reasonable guess — better than silently falling
+      // back to UTC, which is what caused reminders to fire 5.5 hours off
+      // once already.
+      try {
+        tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
+      } catch (_) {
+        // Keep the default (UTC) location.
+      }
     }
 
     await _plugin.initialize(
@@ -63,25 +107,6 @@ class NotificationService {
     await androidImplementation?.requestExactAlarmsPermission();
   }
 
-  // TEMPORARY DIAGNOSTIC: fires a notification immediately, with no alarm
-  // or scheduling involved. Used to isolate whether the problem is in the
-  // scheduling path or in notification display itself. Remove once the
-  // reminder issue is resolved.
-  Future<void> showNowForDiagnostics() async {
-    await _plugin.show(
-      id: 99999,
-      title: 'Smriti test',
-      body: 'If you can see this, notifications themselves work.',
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: 'Medicine, hydration and appointment reminders',
-        ),
-      ),
-    );
-  }
-
   // Schedules a single reminder to fire at exactly [scheduledDate]. [id]
   // should be the reminder's own database row id, so the two stay in sync.
   Future<void> scheduleReminder({
@@ -95,13 +120,7 @@ class NotificationService {
       title: title,
       body: body,
       scheduledDate: scheduledDate,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: 'Medicine, hydration and appointment reminders',
-        ),
-      ),
+      notificationDetails: _notificationDetails,
       // Exact, not inexact: a medicine reminder needs to fire at the actual
       // chosen time, not "sometime around then" — worth the extra permission
       // this requires (requested above), especially since real-device testing

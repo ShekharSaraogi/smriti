@@ -16,10 +16,16 @@ class RemindersScreen extends StatefulWidget {
 
 // The database stores internal status codes (e.g. 'pending'); this maps
 // them to what a patient or caregiver should actually read on screen.
-String _displayStatus(String status) {
+// 'pending' alone doesn't say whether the time has already passed — the
+// database never updates the status on its own once a reminder's moment
+// arrives, so that has to be computed here from the current time, the
+// same way the caregiver dashboard already does.
+String _displayStatus(String status, DateTime scheduledDate) {
   switch (status) {
     case 'pending':
-      return AppStrings.t('reminder_upcoming_status');
+      return scheduledDate.isBefore(DateTime.now())
+          ? AppStrings.t('reminder_missed_status')
+          : AppStrings.t('reminder_upcoming_status');
     default:
       return status;
   }
@@ -131,28 +137,6 @@ class _RemindersScreenState extends State<RemindersScreen> {
               child: Text(AppStrings.t('set_reminder_button')),
             ),
           ),
-          // TEMPORARY DIAGNOSTIC BUTTON — remove once reminders work.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: OutlinedButton(
-              onPressed: () async {
-                try {
-                  await NotificationService.instance.requestPermission();
-                  await NotificationService.instance.showNowForDiagnostics();
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Test notification sent')),
-                  );
-                } catch (e) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Test notification failed: $e')),
-                  );
-                }
-              },
-              child: const Text('Test notification now'),
-            ),
-          ),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -193,6 +177,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
                           ).format(context);
                           final dateLabel =
                               '${scheduledDate.day}/${scheduledDate.month}';
+                          final status = _displayStatus(
+                            reminder['status'] as String,
+                            scheduledDate,
+                          );
                           return ListTile(
                             leading: const Icon(Icons.medication, size: 32),
                             title: Text(
@@ -200,7 +188,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
                               style: const TextStyle(fontSize: 18),
                             ),
                             subtitle: Text(
-                              _displayStatus(reminder['status'] as String),
+                              status,
+                              style: TextStyle(
+                                color: status ==
+                                        AppStrings.t('reminder_missed_status')
+                                    ? Colors.red
+                                    : null,
+                              ),
                             ),
                           );
                         },

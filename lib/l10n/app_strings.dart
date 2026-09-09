@@ -116,6 +116,7 @@ class AppStrings {
     // Not in the translations sheet (it lists internal status codes, not
     // this display label) — not translated yet.
     'reminder_upcoming_status': {'en': 'Upcoming'},
+    'reminder_missed_status': {'en': 'Missed'},
 
     'settings_title': {'en': 'Settings', 'as': 'ছেটিংছ'},
     // Replaces the sheet's "Settings coming soon" placeholder, which no
