@@ -29,21 +29,41 @@ void main() {
         TimeOfDay(hour: future.hour, minute: future.minute),
       );
 
-      expect(result.year, future.year);
-      expect(result.month, future.month);
-      expect(result.day, future.day);
+      // Compares the absolute instant rather than individual date fields.
+      // result's fields are labeled in tz.local (pinned to UTC above),
+      // which can legitimately disagree with the real system-local
+      // calendar day used to build `future` whenever the test happens to
+      // run close to midnight IST — this flaked for exactly that reason
+      // once already. The instant is what actually matters: does the
+      // reminder fire at the right moment, not what day number some
+      // arbitrary timezone label attaches to it.
+      final expectedInstant = DateTime(
+        future.year,
+        future.month,
+        future.day,
+        future.hour,
+        future.minute,
+      );
+      expect(result.isAtSameMomentAs(expectedInstant), isTrue);
     });
 
     test('rolls over to tomorrow when the time has already passed', () {
       final now = DateTime.now();
       final past = now.subtract(const Duration(minutes: 10));
-      final expectedDay = now.add(const Duration(days: 1));
       final result = NotificationService.instance.nextInstanceOf(
         TimeOfDay(hour: past.hour, minute: past.minute),
       );
 
+      final expectedInstant = DateTime(
+        past.year,
+        past.month,
+        past.day,
+        past.hour,
+        past.minute,
+      ).add(const Duration(days: 1));
+
       expect(result.isAfter(now), isTrue);
-      expect(result.day, expectedDay.day);
+      expect(result.isAtSameMomentAs(expectedInstant), isTrue);
     });
   });
 
