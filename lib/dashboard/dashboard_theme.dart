@@ -13,6 +13,7 @@ class DashboardColors {
   static const inkMuted = Color(0xFF6B7094);
 
   static const primary = Color(0xFF5B5FEF);
+  static const primaryDeep = Color(0xFF3D3FB0);
   static const streak = Color(0xFFFF9F43);
   static const good = Color(0xFF2ED8A7);
   static const warning = Color(0xFFEE5A6F);

@@ -20,13 +20,49 @@ class AccuracyTrendChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Accuracy — last 7 days',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: DashboardColors.ink,
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Accuracy — last 7 days',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: DashboardColors.ink,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: DashboardColors.good.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: DashboardColors.good,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Today: ${points.last.accuracy == 0 && points.last.sessionCount == 0 ? '—' : '${(points.last.accuracy * 100).round()}%'}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: DashboardColors.good,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -112,13 +148,20 @@ class AccuracyTrendChart extends StatelessWidget {
                     color: DashboardColors.primary,
                     barWidth: 3,
                     dotData: FlDotData(
-                      getDotPainter: (spot, percent, bar, index) =>
-                          FlDotCirclePainter(
-                        radius: 4,
-                        color: DashboardColors.primary,
-                        strokeWidth: 2,
-                        strokeColor: Colors.white,
-                      ),
+                      // Today's point (the last one) stands out from the
+                      // rest — it's the number that actually matters most
+                      // to a caregiver checking in right now.
+                      getDotPainter: (spot, percent, bar, index) {
+                        final isToday = index == points.length - 1;
+                        return FlDotCirclePainter(
+                          radius: isToday ? 6 : 3.5,
+                          color: isToday
+                              ? DashboardColors.good
+                              : DashboardColors.primary,
+                          strokeWidth: isToday ? 3 : 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
                     ),
                     belowBarData: BarAreaData(
                       show: true,

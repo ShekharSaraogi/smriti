@@ -4,6 +4,12 @@ import '../dashboard_data.dart';
 import '../dashboard_theme.dart';
 
 class GameSummaryCard extends StatelessWidget {
+  // Matches DifficultyEngine.maxTier in the patient app (lib/difficulty/
+  // difficulty_engine.dart) — not imported directly since the dashboard is
+  // a deliberately separate mini-app with no dependency on the patient
+  // app's internals, just the same well-known tier range.
+  static const _maxTier = 5;
+
   final GameSummary summary;
 
   const GameSummaryCard({super.key, required this.summary});
@@ -79,6 +85,22 @@ class GameSummaryCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12,
               color: DashboardColors.inkMuted,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: summary.currentTier / _maxTier),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (context, animatedFraction, child) =>
+                  LinearProgressIndicator(
+                value: animatedFraction,
+                minHeight: 6,
+                backgroundColor: color.withValues(alpha: 0.12),
+                valueColor: AlwaysStoppedAnimation(color),
+              ),
             ),
           ),
         ],

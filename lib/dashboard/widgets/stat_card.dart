@@ -5,7 +5,8 @@ import '../dashboard_theme.dart';
 class StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final String value;
+  final int value;
+  final String suffix;
   final String label;
 
   const StatCard({
@@ -13,6 +14,7 @@ class StatCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.value,
+    this.suffix = '',
     required this.label,
   });
 
@@ -31,13 +33,21 @@ class StatCard extends StatelessWidget {
             child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(height: 16),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: DashboardColors.ink,
-              height: 1.1,
+          // Counts up from 0 on first paint rather than just appearing —
+          // a small, standard touch that makes a stats dashboard feel
+          // alive instead of static, especially the first moment it loads.
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: value.toDouble()),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeOutCubic,
+            builder: (context, animatedValue, child) => Text(
+              '${animatedValue.round()}$suffix',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: DashboardColors.ink,
+                height: 1.1,
+              ),
             ),
           ),
           const SizedBox(height: 4),
