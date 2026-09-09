@@ -14,6 +14,66 @@ class RemindersScreen extends StatefulWidget {
   State<RemindersScreen> createState() => _RemindersScreenState();
 }
 
+// One entry per kind of reminder this screen can set — everything that
+// differs between "medicine" and "hydration" (icon, name, notification
+// wording, confirmation wording) lives here, so adding a 5th type later is
+// one more entry, not a change scattered across the build method.
+class _ReminderType {
+  final String key; // stored in the database's 'type' column
+  final String labelKey;
+  final IconData icon;
+  final String notificationBodyKey;
+  final String snackbarKey;
+
+  const _ReminderType({
+    required this.key,
+    required this.labelKey,
+    required this.icon,
+    required this.notificationBodyKey,
+    required this.snackbarKey,
+  });
+}
+
+const _reminderTypes = [
+  _ReminderType(
+    key: 'medicine',
+    labelKey: 'reminder_type_medicine',
+    icon: Icons.medication,
+    notificationBodyKey: 'reminder_notification_body_medicine',
+    snackbarKey: 'reminder_set_snackbar_medicine',
+  ),
+  _ReminderType(
+    key: 'hydration',
+    labelKey: 'reminder_type_hydration',
+    icon: Icons.local_drink,
+    notificationBodyKey: 'reminder_notification_body_hydration',
+    snackbarKey: 'reminder_set_snackbar_hydration',
+  ),
+  _ReminderType(
+    key: 'activity',
+    labelKey: 'reminder_type_activity',
+    icon: Icons.directions_walk,
+    notificationBodyKey: 'reminder_notification_body_activity',
+    snackbarKey: 'reminder_set_snackbar_activity',
+  ),
+  _ReminderType(
+    key: 'appointment',
+    labelKey: 'reminder_type_appointment',
+    icon: Icons.event,
+    notificationBodyKey: 'reminder_notification_body_appointment',
+    snackbarKey: 'reminder_set_snackbar_appointment',
+  ),
+];
+
+// Falls back to the medicine type's look for any unrecognized/legacy value
+// rather than crashing — old data should always render as *something*.
+_ReminderType _typeFor(String key) {
+  return _reminderTypes.firstWhere(
+    (t) => t.key == key,
+    orElse: () => _reminderTypes.first,
+  );
+}
+
 // The database stores internal status codes (e.g. 'pending'); this maps
 // them to what a patient or caregiver should actually read on screen.
 // 'pending' alone doesn't say whether the time has already passed — the
@@ -27,7 +87,7 @@ String _displayStatus(String status, DateTime scheduledDate) {
           ? AppStrings.t('reminder_missed_status')
           : AppStrings.t('reminder_upcoming_status');
     case 'completed':
-      return AppStrings.t('reminder_taken_status');
+      return AppStrings.t('reminder_done_status');
     default:
       return status;
   }
@@ -66,7 +126,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
   }
 
-  Future<void> _setMedicineReminder() async {
+  Future<void> _setReminder(_ReminderType type) async {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -87,7 +147,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
           await DatabaseHelper.instance.getOrCreateDefaultPatient();
       final reminderId = await DatabaseHelper.instance.insertReminder({
         'patient_id': patientId,
-        'type': 'medicine',
+        'type': type.key,
         'scheduled_time': scheduledDate.toIso8601String(),
         'status': 'pending',
       });
@@ -95,7 +155,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
       await NotificationService.instance.scheduleReminder(
         id: reminderId,
         title: AppStrings.t('app_name'),
-        body: AppStrings.t('reminder_notification_body'),
+        body: AppStrings.t(type.notificationBodyKey),
         scheduledDate: scheduledDate,
       );
       // Fire-and-forget: don't make the patient wait on a network round
@@ -107,7 +167,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppStrings.t('reminder_set_snackbar', {
+            AppStrings.t(type.snackbarKey, {
               'time': pickedTime.format(context),
             }),
           ),
@@ -122,7 +182,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
   }
 
-  Future<void> _markAsTaken(int reminderId) async {
+  Future<void> _markAsDone(int reminderId) async {
     await DatabaseHelper.instance.markReminderStatus(
       reminderId,
       'completed',
@@ -141,14 +201,26 @@ class _RemindersScreenState extends State<RemindersScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
-              onPressed: _setMedicineReminder,
-              child: Text(AppStrings.t('set_reminder_button')),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 2.4,
+              children: [
+                for (final type in _reminderTypes)
+                  ElevatedButton.icon(
+                    onPressed: () => _setReminder(type),
+                    icon: Icon(type.icon),
+                    label: Text(
+                      AppStrings.t(type.labelKey),
+                      style: const TextStyle(fontSize: 16),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
             ),
           ),
           Expanded(
@@ -176,6 +248,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                         itemCount: _reminders.length,
                         itemBuilder: (context, index) {
                           final reminder = _reminders[index];
+                          final type = _typeFor(reminder['type'] as String);
                           // The stored string carries an explicit UTC
                           // offset (e.g. "...+0530"). DateTime.parse alone
                           // returns that normalized to UTC — its .hour and
@@ -197,32 +270,43 @@ class _RemindersScreenState extends State<RemindersScreen> {
                             scheduledDate,
                           );
                           return ListTile(
-                            leading: const Icon(Icons.medication, size: 32),
+                            leading: Icon(type.icon, size: 32),
                             title: Text(
-                              '$timeLabel  •  $dateLabel',
-                              style: const TextStyle(fontSize: 18),
-                            ),
-                            subtitle: Text(
-                              status,
-                              style: TextStyle(
-                                color: status ==
-                                        AppStrings.t('reminder_missed_status')
-                                    ? Colors.red
-                                    : status ==
-                                            AppStrings.t(
-                                              'reminder_taken_status',
-                                            )
-                                        ? Colors.green
-                                        : null,
+                              AppStrings.t(type.labelKey),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('$timeLabel  •  $dateLabel'),
+                                Text(
+                                  status,
+                                  style: TextStyle(
+                                    color: status ==
+                                            AppStrings.t(
+                                              'reminder_missed_status',
+                                            )
+                                        ? Colors.red
+                                        : status ==
+                                                AppStrings.t(
+                                                  'reminder_done_status',
+                                                )
+                                            ? Colors.green
+                                            : null,
+                                  ),
+                                ),
+                              ],
                             ),
                             trailing: rawStatus == 'pending'
                                 ? TextButton(
-                                    onPressed: () => _markAsTaken(
+                                    onPressed: () => _markAsDone(
                                       reminder['id'] as int,
                                     ),
                                     child: Text(
-                                      AppStrings.t('mark_taken_button'),
+                                      AppStrings.t('mark_done_button'),
                                     ),
                                   )
                                 : const Icon(

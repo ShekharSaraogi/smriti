@@ -100,25 +100,52 @@ class AppStrings {
     'routine_saved_snackbar': {'en': 'Daily routine saved'},
 
     'reminders_title': {'en': 'Reminders', 'as': 'সোঁৱৰণী'},
-    'set_reminder_button': {
-      'en': 'Set medicine reminder',
-      'as': 'ঔষধৰ সোঁৱৰণী ছেট কৰক',
-    },
     'no_reminders_yet': {'en': 'No reminders yet', 'as': 'এতিয়ালৈকে কোনো সোঁৱৰণী নাই'},
-    'reminder_set_snackbar': {
-      'en': 'Medicine reminder set for {time}',
-      'as': '{time} ৰ বাবে ঔষধৰ সোঁৱৰণী ছেট কৰা হৈছে',
-    },
-    'reminder_notification_body': {
-      'en': 'Time to take your medicine',
-      'as': 'আপোনাৰ ঔষধ খোৱাৰ সময় হৈছে',
-    },
     // Not in the translations sheet (it lists internal status codes, not
     // this display label) — not translated yet.
     'reminder_upcoming_status': {'en': 'Upcoming'},
     'reminder_missed_status': {'en': 'Missed'},
-    'reminder_taken_status': {'en': 'Taken'},
-    'mark_taken_button': {'en': 'Mark as taken'},
+    'reminder_done_status': {'en': 'Done'},
+    'mark_done_button': {'en': 'Mark as done'},
+
+    // One set of {type name, notification body, confirmation snackbar} per
+    // reminder type — see reminders_screen.dart's _reminderTypes list. Only
+    // "medicine" existed before this session, so only it has real Assamese
+    // (reused from the sheet's existing medicine-reminder rows, since ঔষধ
+    // already meant "medicine" consistently across all of them). The other
+    // 3 are new — English only until the teammate translates them.
+    'reminder_type_medicine': {'en': 'Medicine', 'as': 'ঔষধ'},
+    'reminder_type_hydration': {'en': 'Hydration'},
+    'reminder_type_activity': {'en': 'Daily Activity'},
+    'reminder_type_appointment': {'en': 'Medical Appointment'},
+
+    'reminder_notification_body_medicine': {
+      'en': 'Time to take your medicine',
+      'as': 'আপোনাৰ ঔষধ খোৱাৰ সময় হৈছে',
+    },
+    'reminder_notification_body_hydration': {
+      'en': 'Time to drink some water',
+    },
+    'reminder_notification_body_activity': {
+      'en': 'Time for your daily activity',
+    },
+    'reminder_notification_body_appointment': {
+      'en': 'Time for your medical appointment',
+    },
+
+    'reminder_set_snackbar_medicine': {
+      'en': 'Medicine reminder set for {time}',
+      'as': '{time} ৰ বাবে ঔষধৰ সোঁৱৰণী ছেট কৰা হৈছে',
+    },
+    'reminder_set_snackbar_hydration': {
+      'en': 'Hydration reminder set for {time}',
+    },
+    'reminder_set_snackbar_activity': {
+      'en': 'Activity reminder set for {time}',
+    },
+    'reminder_set_snackbar_appointment': {
+      'en': 'Appointment reminder set for {time}',
+    },
 
     'settings_title': {'en': 'Settings', 'as': 'ছেটিংছ'},
     // Replaces the sheet's "Settings coming soon" placeholder, which no

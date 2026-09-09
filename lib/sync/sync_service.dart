@@ -91,13 +91,19 @@ class SyncService {
   ) async {
     final reminders = await DatabaseHelper.instance.getUnsyncedReminders();
     for (final reminder in reminders) {
-      await client.from('reminders').insert({
+      // Upsert, not insert: a reminder can be re-synced more than once
+      // (e.g. once as "pending", again later once marked done), and
+      // local_id + patient_id together identify the same reminder each
+      // time — without this, a second sync of the same row would just
+      // create a duplicate in the cloud instead of updating it.
+      await client.from('reminders').upsert({
         'patient_id': cloudPatientId,
+        'local_id': reminder['id'],
         'type': reminder['type'],
         'scheduled_time': reminder['scheduled_time'],
         'status': reminder['status'],
         'completed_at': reminder['completed_at'],
-      });
+      }, onConflict: 'patient_id,local_id');
       await DatabaseHelper.instance.markReminderSynced(reminder['id'] as int);
     }
   }

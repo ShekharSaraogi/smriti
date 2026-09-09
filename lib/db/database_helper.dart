@@ -170,7 +170,13 @@ class DatabaseHelper {
     final db = await database;
     return await db.update(
       'reminders',
-      {'status': status, 'completed_at': completedAt},
+      // Resetting synced back to 0 is what makes this change actually
+      // reach Supabase — without it, a reminder that already synced once
+      // (as "pending") would never be picked up again by
+      // getUnsyncedReminders() after being marked done, since that only
+      // looks for synced = 0. This was a real bug: status changes were
+      // silently never syncing at all.
+      {'status': status, 'completed_at': completedAt, 'synced': 0},
       where: 'id = ?',
       whereArgs: [reminderId],
     );

@@ -32,10 +32,16 @@ create table game_sessions (
 create table reminders (
   id bigserial primary key,
   patient_id uuid not null references patients (id),
+  -- The phone's own local row id for this reminder. A reminder syncs more
+  -- than once over its life (once "pending", again once marked done) —
+  -- local_id + patient_id together is what the app upserts on so a later
+  -- sync updates this same row instead of creating a duplicate.
+  local_id integer not null,
   type text not null,
   scheduled_time timestamptz not null,
   status text not null,
-  completed_at timestamptz
+  completed_at timestamptz,
+  unique (patient_id, local_id)
 );
 
 -- Row Level Security is on, but with a wide-open policy for now — there's
