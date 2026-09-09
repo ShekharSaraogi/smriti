@@ -26,6 +26,8 @@ String _displayStatus(String status, DateTime scheduledDate) {
       return scheduledDate.isBefore(DateTime.now())
           ? AppStrings.t('reminder_missed_status')
           : AppStrings.t('reminder_upcoming_status');
+    case 'completed':
+      return AppStrings.t('reminder_taken_status');
     default:
       return status;
   }
@@ -120,6 +122,18 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
   }
 
+  Future<void> _markAsTaken(int reminderId) async {
+    await DatabaseHelper.instance.markReminderStatus(
+      reminderId,
+      'completed',
+      completedAt: DateTime.now().toIso8601String(),
+    );
+    // Fire-and-forget, same reasoning as everywhere else this is used —
+    // don't make the patient wait on a network round trip for a UI update.
+    unawaited(SyncService.instance.syncAll());
+    _loadReminders();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,8 +191,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
                           ).format(context);
                           final dateLabel =
                               '${scheduledDate.day}/${scheduledDate.month}';
+                          final rawStatus = reminder['status'] as String;
                           final status = _displayStatus(
-                            reminder['status'] as String,
+                            rawStatus,
                             scheduledDate,
                           );
                           return ListTile(
@@ -193,9 +208,27 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                 color: status ==
                                         AppStrings.t('reminder_missed_status')
                                     ? Colors.red
-                                    : null,
+                                    : status ==
+                                            AppStrings.t(
+                                              'reminder_taken_status',
+                                            )
+                                        ? Colors.green
+                                        : null,
                               ),
                             ),
+                            trailing: rawStatus == 'pending'
+                                ? TextButton(
+                                    onPressed: () => _markAsTaken(
+                                      reminder['id'] as int,
+                                    ),
+                                    child: Text(
+                                      AppStrings.t('mark_taken_button'),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                  ),
                           );
                         },
                       ),

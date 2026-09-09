@@ -117,6 +117,8 @@ class AppStrings {
     // this display label) — not translated yet.
     'reminder_upcoming_status': {'en': 'Upcoming'},
     'reminder_missed_status': {'en': 'Missed'},
+    'reminder_taken_status': {'en': 'Taken'},
+    'mark_taken_button': {'en': 'Mark as taken'},
 
     'settings_title': {'en': 'Settings', 'as': 'ছেটিংছ'},
     // Replaces the sheet's "Settings coming soon" placeholder, which no
