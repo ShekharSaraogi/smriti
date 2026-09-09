@@ -147,6 +147,15 @@ class AppStrings {
       'en': 'Appointment reminder set for {time}',
     },
 
+    'edit_reminder_button': {'en': 'Edit'},
+    'delete_button': {'en': 'Delete'},
+    'cancel_button': {'en': 'Cancel'},
+    'delete_reminder_title': {'en': 'Delete reminder?'},
+    'delete_reminder_confirm': {'en': 'This cannot be undone.'},
+    'reminder_time_in_past_error': {
+      'en': 'Please pick a time in the future',
+    },
+
     'settings_title': {'en': 'Settings', 'as': 'ছেটিংছ'},
     // Replaces the sheet's "Settings coming soon" placeholder, which no
     // longer exists in the app — not translated yet.

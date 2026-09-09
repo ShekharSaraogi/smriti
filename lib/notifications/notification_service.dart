@@ -129,9 +129,9 @@ class NotificationService {
     );
   }
 
-  // The next moment [timeOfDay] occurs — today if it hasn't passed yet,
-  // otherwise tomorrow. Callers use this same instant for both the
-  // notification and the database row, so the two can never disagree.
+  // Combines an explicitly picked date and time into one instant. Callers
+  // use this same instant for both the notification and the database row,
+  // so the two can never disagree.
   //
   // Deliberately built from plain Dart DateTime, not tz.TZDateTime's own
   // component constructor. Dart's DateTime always knows the device's real
@@ -139,20 +139,31 @@ class NotificationService {
   // involved, nothing that can fail to resolve. tz.TZDateTime.from() then
   // carries that already-correct absolute instant over, using tz.local only
   // to label/display it. That split is what makes this correct even if
-  // tz.local's *name* is wrong (as it was here): only the label would be
-  // off, never the actual moment the reminder fires.
-  tz.TZDateTime nextInstanceOf(TimeOfDay timeOfDay) {
-    final now = DateTime.now();
-    var scheduled = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      timeOfDay.hour,
-      timeOfDay.minute,
+  // tz.local's *name* is wrong (as it happened on a real device once
+  // already): only the label would be off, never the actual moment the
+  // reminder fires.
+  tz.TZDateTime combine(DateTime date, TimeOfDay time) {
+    final combined = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
     );
-    if (scheduled.isBefore(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
+    return tz.TZDateTime.from(combined, tz.local);
+  }
+
+  // Cancels a previously scheduled reminder — used when a reminder is
+  // edited (cancel the old time, schedule the new one) or deleted.
+  // Harmless no-op if nothing with this id is currently scheduled.
+  Future<void> cancelReminder(int id) async {
+    try {
+      await _plugin.cancel(id: id);
+    } catch (_) {
+      // Best-effort: whatever change triggered this (editing or deleting
+      // a reminder) should still go through even if the notification
+      // itself couldn't be cancelled — the database change is what
+      // actually matters to the user, not this cleanup step.
     }
-    return tz.TZDateTime.from(scheduled, tz.local);
   }
 }

@@ -156,9 +156,47 @@ class DatabaseHelper {
     final db = await database;
     return await db.query(
       'reminders',
-      where: 'patient_id = ?',
-      whereArgs: [patientId],
+      where: 'patient_id = ? AND status != ?',
+      whereArgs: [patientId, 'deleted'],
       orderBy: 'scheduled_time ASC',
+    );
+  }
+
+  // Reschedules an existing reminder to a new time (used when a reminder
+  // is edited) — resets it to pending and clears any prior completion,
+  // since a newly-rescheduled reminder hasn't happened yet.
+  Future<void> updateReminderSchedule(
+    int reminderId,
+    String scheduledTime,
+  ) async {
+    final db = await database;
+    await db.update(
+      'reminders',
+      {
+        'scheduled_time': scheduledTime,
+        'status': 'pending',
+        'completed_at': null,
+        'synced': 0,
+      },
+      where: 'id = ?',
+      whereArgs: [reminderId],
+    );
+  }
+
+  // Soft delete: a "deleted" status, not a removed row. A hard local
+  // delete would have no way to tell Supabase the reminder is gone if the
+  // phone happens to be offline right now — this reuses the same
+  // sync-whenever-connectivity-allows path already used for every other
+  // status change instead of needing a separate delete-sync mechanism.
+  // getRemindersForPatient already filters these out, so they simply
+  // disappear from the patient's own list once synced.
+  Future<void> deleteReminder(int reminderId) async {
+    final db = await database;
+    await db.update(
+      'reminders',
+      {'status': 'deleted', 'synced': 0},
+      where: 'id = ?',
+      whereArgs: [reminderId],
     );
   }
 

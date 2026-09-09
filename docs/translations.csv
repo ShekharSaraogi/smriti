@@ -53,3 +53,20 @@ Daily Routine (caregiver screen),Confirmation pop-up after saving,Daily routine 
 Reminders,Status label shown next to a not-yet-due reminder,Upcoming,,
 Settings,Button (replaces the old "Settings coming soon" placeholder),Edit Daily Routine,,
 Settings,Label above the language picker,Language,,
+Reminders,Button (opens a menu),Edit,,
+Reminders,Button,Delete,,
+Reminders,Button,Cancel,,
+Reminders,Confirmation dialog title,Delete reminder?,,
+Reminders,Confirmation dialog message,This cannot be undone.,,
+Reminders,Error message shown if the picked time has already passed,Please pick a time in the future,,
+Reminders,Button,Mark as done,,(replaces the earlier "Mark as taken" - reminders are no longer only about medicine)
+Reminders,Status label,Done,,(replaces the earlier "Taken")
+Reminders,Reminder type,Hydration,,
+Reminders,Reminder type,Daily Activity,,
+Reminders,Reminder type,Medical Appointment,,
+Reminders,Notification text spoken/shown when a hydration reminder fires,Time to drink some water,,
+Reminders,Notification text spoken/shown when an activity reminder fires,Time for your daily activity,,
+Reminders,Notification text spoken/shown when an appointment reminder fires,Time for your medical appointment,,
+Reminders,Confirmation pop-up after setting a hydration reminder,Hydration reminder set for {time},,{time} is the chosen time - translate only the surrounding words
+Reminders,Confirmation pop-up after setting an activity reminder,Activity reminder set for {time},,{time} is the chosen time - translate only the surrounding words
+Reminders,Confirmation pop-up after setting an appointment reminder,Appointment reminder set for {time},,{time} is the chosen time - translate only the surrounding words

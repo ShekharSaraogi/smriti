@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 import '../db/database_helper.dart';
 import '../l10n/app_strings.dart';
@@ -126,22 +127,52 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
   }
 
-  Future<void> _setReminder(_ReminderType type) async {
+  // Shared by both creating and editing a reminder — asks for a date, then
+  // a time, and returns the combined instant, or null if either was
+  // cancelled or the result isn't actually in the future. [initialDate]/
+  // [initialTime] let editing start from the reminder's current schedule
+  // instead of "today, now".
+  Future<tz.TZDateTime?> _pickDateAndTime({
+    required DateTime initialDate,
+    required TimeOfDay initialTime,
+  }) async {
+    final now = DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate.isBefore(now) ? now : initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (pickedDate == null || !mounted) return null;
+
     final pickedTime = await showTimePicker(
       context: context,
+      initialTime: initialTime,
+    );
+    if (pickedTime == null || !mounted) return null;
+
+    final scheduledDate = NotificationService.instance.combine(
+      pickedDate,
+      pickedTime,
+    );
+    if (scheduledDate.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.t('reminder_time_in_past_error'))),
+      );
+      return null;
+    }
+    return scheduledDate;
+  }
+
+  Future<void> _setReminder(_ReminderType type) async {
+    final scheduledDate = await _pickDateAndTime(
+      initialDate: DateTime.now(),
       initialTime: TimeOfDay.now(),
     );
-    if (pickedTime == null) return;
-    if (!mounted) return;
+    if (scheduledDate == null || !mounted) return;
 
     try {
       await NotificationService.instance.requestPermission();
-
-      // Computed once, then reused for both the notification and the
-      // database row below, so they always agree on exactly when this fires.
-      final scheduledDate = NotificationService.instance.nextInstanceOf(
-        pickedTime,
-      );
 
       final patientId =
           await DatabaseHelper.instance.getOrCreateDefaultPatient();
@@ -168,7 +199,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
         SnackBar(
           content: Text(
             AppStrings.t(type.snackbarKey, {
-              'time': pickedTime.format(context),
+              'time': TimeOfDay.fromDateTime(scheduledDate).format(context),
             }),
           ),
         ),
@@ -192,6 +223,100 @@ class _RemindersScreenState extends State<RemindersScreen> {
     // don't make the patient wait on a network round trip for a UI update.
     unawaited(SyncService.instance.syncAll());
     _loadReminders();
+  }
+
+  Future<void> _editReminder(Map<String, dynamic> reminder) async {
+    final currentScheduled = DateTime.parse(
+      reminder['scheduled_time'] as String,
+    ).toLocal();
+
+    final scheduledDate = await _pickDateAndTime(
+      initialDate: currentScheduled,
+      initialTime: TimeOfDay.fromDateTime(currentScheduled),
+    );
+    if (scheduledDate == null || !mounted) return;
+
+    final reminderId = reminder['id'] as int;
+    final type = _typeFor(reminder['type'] as String);
+
+    // Cancel the old alarm before scheduling the new one — otherwise both
+    // would fire, since they'd share the same id but the plugin has no
+    // reason to assume a re-schedule was intended rather than a duplicate.
+    await NotificationService.instance.cancelReminder(reminderId);
+    await DatabaseHelper.instance.updateReminderSchedule(
+      reminderId,
+      scheduledDate.toIso8601String(),
+    );
+    await NotificationService.instance.scheduleReminder(
+      id: reminderId,
+      title: AppStrings.t('app_name'),
+      body: AppStrings.t(type.notificationBodyKey),
+      scheduledDate: scheduledDate,
+    );
+    unawaited(SyncService.instance.syncAll());
+    _loadReminders();
+  }
+
+  Future<void> _deleteReminder(Map<String, dynamic> reminder) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppStrings.t('delete_reminder_title')),
+        content: Text(AppStrings.t('delete_reminder_confirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(AppStrings.t('cancel_button')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              AppStrings.t('delete_button'),
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final reminderId = reminder['id'] as int;
+    await NotificationService.instance.cancelReminder(reminderId);
+    await DatabaseHelper.instance.deleteReminder(reminderId);
+    unawaited(SyncService.instance.syncAll());
+    _loadReminders();
+  }
+
+  Future<void> _showReminderOptions(Map<String, dynamic> reminder) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: Text(AppStrings.t('edit_reminder_button')),
+              onTap: () => Navigator.pop(sheetContext, 'edit'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: Text(
+                AppStrings.t('delete_button'),
+                style: const TextStyle(color: Colors.red),
+              ),
+              onTap: () => Navigator.pop(sheetContext, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    if (action == 'edit') {
+      await _editReminder(reminder);
+    } else if (action == 'delete') {
+      await _deleteReminder(reminder);
+    }
   }
 
   @override
@@ -300,8 +425,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                 ),
                               ],
                             ),
-                            trailing: rawStatus == 'pending'
-                                ? TextButton(
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (rawStatus == 'pending')
+                                  TextButton(
                                     onPressed: () => _markAsDone(
                                       reminder['id'] as int,
                                     ),
@@ -309,10 +437,18 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                       AppStrings.t('mark_done_button'),
                                     ),
                                   )
-                                : const Icon(
+                                else
+                                  const Icon(
                                     Icons.check_circle,
                                     color: Colors.green,
                                   ),
+                                IconButton(
+                                  icon: const Icon(Icons.more_vert),
+                                  onPressed: () =>
+                                      _showReminderOptions(reminder),
+                                ),
+                              ],
+                            ),
                           );
                         },
                       ),

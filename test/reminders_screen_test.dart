@@ -126,4 +126,47 @@ void main() {
     expect(find.text('Missed'), findsNothing);
     expect(find.text('Done'), findsOneWidget);
   });
+
+  testWidgets('the overflow menu offers Edit and Delete',
+      (WidgetTester tester) async {
+    await _seedReminder(tester, DateTime.now().add(const Duration(hours: 1)));
+    await _pumpScreen(tester);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    // A modal bottom sheet's entrance is a finite, one-shot transition
+    // (unlike a perpetual spinner), so pumpAndSettle is fine here.
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+  });
+
+  testWidgets('deleting a reminder, after confirming, removes it from the list',
+      (WidgetTester tester) async {
+    await _seedReminder(tester, DateTime.now().add(const Duration(hours: 1)));
+    await _pumpScreen(tester);
+
+    expect(find.text('No reminders yet'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete'));
+    // The sheet closes and the confirmation dialog opens as part of the
+    // same chain — settling once covers both.
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete').last);
+    // Deleting writes to the database (soft delete), then reloads the
+    // list — real async work the fake clock can't service on its own.
+    for (var i = 0; i < 40; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump();
+      if (find.text('No reminders yet').evaluate().isNotEmpty) break;
+    }
+
+    expect(find.text('No reminders yet'), findsOneWidget);
+  });
 }
