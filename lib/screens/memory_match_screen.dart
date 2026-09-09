@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
 import '../difficulty/difficulty_engine.dart';
+import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
 
 class MemoryMatchScreen extends StatefulWidget {
@@ -181,11 +182,13 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Well done!'),
+        title: Text(AppStrings.t('well_done_title')),
         content: Text(
-          'You found all $_pairCount pairs.\n'
-          'Attempts: $_totalAttempts\n'
-          'Accuracy: $accuracy%',
+          AppStrings.t('memory_match_win_message', {
+            'pairs': '$_pairCount',
+            'attempts': '$_totalAttempts',
+            'percent': '$accuracy',
+          }),
           style: const TextStyle(fontSize: 18),
         ),
         actions: [
@@ -197,7 +200,10 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
               // again for next round, same as on first load.
               _loadRealTier();
             },
-            child: const Text('Play again', style: TextStyle(fontSize: 18)),
+            child: Text(
+              AppStrings.t('play_again_button'),
+              style: const TextStyle(fontSize: 18),
+            ),
           ),
         ],
       ),
@@ -207,13 +213,18 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Memory Match')),
+      appBar: AppBar(title: Text(AppStrings.t('memory_match_title'))),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'Pairs found: $_correctAttempts of $_pairCount  •  Level $_currentTier',
+              '${AppStrings.t('memory_match_progress', {
+                    'count': '$_correctAttempts',
+                    'total': '$_pairCount',
+                  })}  •  ${AppStrings.t('level_label', {
+                    'tier': '$_currentTier',
+                  })}',
               style: const TextStyle(fontSize: 18),
             ),
           ),

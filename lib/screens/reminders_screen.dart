@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
+import '../l10n/app_strings.dart';
 import '../notifications/notification_service.dart';
 import '../sync/sync_service.dart';
 
@@ -18,7 +19,7 @@ class RemindersScreen extends StatefulWidget {
 String _displayStatus(String status) {
   switch (status) {
     case 'pending':
-      return 'Upcoming';
+      return AppStrings.t('reminder_upcoming_status');
     default:
       return status;
   }
@@ -85,8 +86,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
       await NotificationService.instance.scheduleReminder(
         id: reminderId,
-        title: 'Smriti',
-        body: 'Time to take your medicine',
+        title: AppStrings.t('app_name'),
+        body: AppStrings.t('reminder_notification_body'),
         scheduledDate: scheduledDate,
       );
       // Fire-and-forget: don't make the patient wait on a network round
@@ -98,7 +99,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Medicine reminder set for ${pickedTime.format(context)}',
+            AppStrings.t('reminder_set_snackbar', {
+              'time': pickedTime.format(context),
+            }),
           ),
         ),
       );
@@ -114,7 +117,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reminders')),
+      appBar: AppBar(title: Text(AppStrings.t('reminders_title'))),
       body: Column(
         children: [
           Padding(
@@ -125,7 +128,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 textStyle: const TextStyle(fontSize: 20),
               ),
               onPressed: _setMedicineReminder,
-              child: const Text('Set medicine reminder'),
+              child: Text(AppStrings.t('set_reminder_button')),
             ),
           ),
           // TEMPORARY DIAGNOSTIC BUTTON — remove once reminders work.
@@ -165,10 +168,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
                         ),
                       )
                 : _reminders.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
-                          'No reminders yet',
-                          style: TextStyle(fontSize: 18),
+                          AppStrings.t('no_reminders_yet'),
+                          style: const TextStyle(fontSize: 18),
                         ),
                       )
                     : ListView.builder(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import 'attention_sweep_screen.dart';
 import 'memory_match_screen.dart';
 import 'pattern_voice_screen.dart';
@@ -11,7 +12,7 @@ class GamesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Games')),
+      appBar: AppBar(title: Text(AppStrings.t('games_title'))),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -29,7 +30,7 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text('Memory Match'),
+              child: Text(AppStrings.t('games_memory_match_button')),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -45,7 +46,7 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text('Pattern & Voice'),
+              child: Text(AppStrings.t('games_pattern_voice_button')),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -61,7 +62,7 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text('Attention Sweep'),
+              child: Text(AppStrings.t('games_attention_sweep_button')),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -77,7 +78,7 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text('Routine Recall'),
+              child: Text(AppStrings.t('games_routine_recall_button')),
             ),
           ],
         ),

@@ -1,38 +1,55 @@
 Screen,Where it appears,English text,Assamese,Notes
-App,Name shown in phone's app switcher,Smriti,,"App names are often left as-is, but flag for the team to decide"
-Home,Title bar,Smriti,,
-Home,Button,Games,,
-Home,Button,Reminders,,
-Home,Button,Settings,,
-Games list,Title bar,Games,,
-Games list,Button,Memory Match,,
-Games list,Button,Pattern & Voice,,
-Memory Match,Title bar,Memory Match,,
-Memory Match,Progress line above the board,Pairs found: {count} of {total} . Level {tier},,"{count} {total} {tier} are numbers that change live - translate only the surrounding words, keep the {curly brace} parts exactly as they are"
-Memory Match,Win pop-up title,Well done!,,
-Memory Match,Win pop-up message,"You found all {pairs} pairs. Attempts: {attempts} Accuracy: {percent}%",,"{pairs} {attempts} {percent} are numbers - same rule as above"
-Memory Match,Win pop-up button,Play again,,
-Pattern & Voice,Title bar,Pattern & Voice,,
-Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Flower,,"Important: must match how a real Assamese speaker would actually say this word, since speech recognition compares against it"
-Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Umbrella,,Same as above
-Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Bird,,Same as above
-Pattern & Voice,Question spoken aloud by the app,What is this?,,This is spoken by text-to-speech, not just displayed
-Pattern & Voice,Progress line,Round {n} of {total},,"{n} {total} are numbers - translate only the surrounding words"
-Pattern & Voice,Label above the microphone button,or answer by voice:,,
-Pattern & Voice,Feedback spoken aloud by the app,Correct!,,Spoken by text-to-speech
-Pattern & Voice,Feedback spoken aloud by the app,Not quite.,,Spoken by text-to-speech
-Pattern & Voice,Feedback shown on screen,Correct!,,"Displayed text - separate from the spoken version above, translate independently"
-Pattern & Voice,Feedback shown on screen,Not quite - next one,,Displayed text
-Pattern & Voice,Message shown if the phone has no voice recognition,Voice input unavailable on this device - use the buttons above.,,
-Pattern & Voice,Win pop-up title,Well done!,,
-Pattern & Voice,Win pop-up message,You got {correct} of {total} correct.,,"{correct} {total} are numbers - translate only the surrounding words"
-Pattern & Voice,Win pop-up button,Done,,
-Reminders,Title bar,Reminders,,
-Reminders,Button,Set medicine reminder,,
-Reminders,Message shown when no reminders are set yet,No reminders yet,,
-Reminders,Confirmation pop-up after setting a reminder,Medicine reminder set for {time},,{time} is the chosen time - translate only the surrounding words
-Reminders,THE ACTUAL TEXT THAT POPS UP ON THE PHONE AS A REMINDER,Time to take your medicine,,"This is the single most important string in the whole list - it's the real reminder message the patient sees"
-Reminders,"Notification category name, visible only if someone opens the phone's own Settings app",Smriti Reminders,,Low visibility - fine to do last
-Reminders,"Notification category description, visible only in the phone's own Settings app",Medicine hydration and appointment reminders,,Low visibility - fine to do last
-Settings,Title bar,Settings,,
-Settings,Placeholder message,Settings coming soon,,
+App,Name shown in phone's app switcher,Smriti,স্মৃতি,"App names are often left as-is, but flag for the team to decide"
+Home,Title bar,Smriti,স্মৃতি,
+Home,Button,Games,গেম,
+Home,Button,Reminders,সোঁৱৰণী,
+Home,Button,Settings,ছেটিংছ,
+Games list,Title bar,Games,গেম,
+Games list,Button,Memory Match,স্মৃতি মিলোৱা,
+Games list,Button,Pattern & Voice,পেটাৰ্ণ আৰু মাত,
+Memory Match,Title bar,Memory Match,স্মৃতি মিলোৱা,
+Memory Match,Progress line above the board,Pairs found: {count} of {total} . Level {tier},{total} ৰ ভিতৰত {count} যোৰা পোৱা গৈছে। স্তৰ {tier},"{count} {total} {tier} are numbers that change live - translate only the surrounding words, keep the {curly brace} parts exactly as they are"
+Memory Match,Win pop-up title,Well done!,বহুত ভাল!,
+Memory Match,Win pop-up message,"You found all {pairs} pairs. Attempts: {attempts} Accuracy: {percent}%",আপুনি আটাইকেইটা {pairs} যোৰা বিচাৰি পালে। চেষ্টা: {attempts} শুদ্ধতা: {percent}%,{pairs} {attempts} {percent} are numbers - same rule as above
+Memory Match,Win pop-up button,Play again,আকৌ খেলক,
+Pattern & Voice,Title bar,Pattern & Voice,পেটাৰ্ণ আৰু মাত,
+Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Flower,ফুল,"Important: must match how a real Assamese speaker would actually say this word, since speech recognition compares against it"
+Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Umbrella,ছাতি,Same as above
+Pattern & Voice,"Object name - shown on a button, and compared against what the patient says out loud",Bird,চৰাই,Same as above
+Pattern & Voice,Question spoken aloud by the app,What is this?,এইটো কি?,This is spoken by text-to-speech, not just displayed
+Pattern & Voice,Progress line,Round {n} of {total},{total} ৰ ভিতৰত ৰাউণ্ড {n},{n} {total} are numbers - translate only the surrounding words
+Pattern & Voice,Label above the microphone button,or answer by voice:,বা মাতেৰে উত্তৰ দিয়ক:,
+Pattern & Voice,Feedback spoken aloud by the app,Correct!,শুদ্ধ!,Spoken by text-to-speech
+Pattern & Voice,Feedback spoken aloud by the app,Not quite.,সঠিক নহয়।,Spoken by text-to-speech
+Pattern & Voice,Feedback shown on screen,Correct!,শুদ্ধ!,"Displayed text - separate from the spoken version above, translate independently"
+Pattern & Voice,Feedback shown on screen,Not quite - next one,সঠিক নহয় - পৰৱৰ্তীটো,Displayed text
+Pattern & Voice,Message shown if the phone has no voice recognition,Voice input unavailable on this device - use the buttons above.,এই ডিভাইচটোত ভইচ ইনপুট উপলব্ধ নহয় - ওপৰৰ বুটামবোৰ ব্যৱহাৰ কৰক।,
+Pattern & Voice,Win pop-up title,Well done!,বহুত ভাল!,
+Pattern & Voice,Win pop-up message,You got {correct} of {total} correct.,আপুনি {total} ৰ ভিতৰত {correct} টা শুদ্ধ কৰিছে।,{correct} {total} are numbers - translate only the surrounding words
+Reminders,Title bar,Reminders,সোঁৱৰণী,
+Reminders,Button,Set medicine reminder,ঔষধৰ সোঁৱৰণী ছেট কৰক,
+Reminders,Message shown when no reminders are set yet,No reminders yet,এতিয়ালৈকে কোনো সোঁৱৰণী নাই,
+Reminders,Confirmation pop-up after setting a reminder,Medicine reminder set for {time},{time} ৰ বাবে ঔষধৰ সোঁৱৰণী ছেট কৰা হৈছে,{time} is the chosen time - translate only the surrounding words
+Reminders,THE ACTUAL TEXT THAT POPS UP ON THE PHONE AS A REMINDER,Time to take your medicine,আপোনাৰ ঔষধ খোৱাৰ সময় হৈছে,This is the single most important string in the whole list - it's the real reminder message the patient sees
+Reminders,"Notification category name, visible only if someone opens the phone's own Settings app",Smriti Reminders,স্মৃতি সোঁৱৰণী,Low visibility - fine to do last
+Reminders,"Notification category description, visible only in the phone's own Settings app",Medicine hydration and appointment reminders,ঔষধ, পানী খোৱা আৰু এপইণ্টমেণ্টৰ সোঁৱৰণী,Low visibility - fine to do last
+Settings,Title bar,Settings,ছেটিংছ,
+Games list,Button (new game),Attention Sweep,,
+Games list,Button (new game),Routine Recall,,
+Attention Sweep,Title bar,Attention Sweep,,
+Attention Sweep,Instruction line,Tap the different one,,
+Attention Sweep,Countdown line,Time left: {seconds} s,,{seconds} is a number - translate only the surrounding words
+Attention Sweep,Feedback shown on screen,Time's up - next one,,Displayed text
+Routine Recall,Title bar,Routine Recall,,
+Routine Recall,Question shown on screen,"After ""{step}"", what comes next?",,"{step} is whatever the caregiver typed into Daily Routine - translate only the surrounding words"
+Routine Recall,Message shown if no routine has been set up yet,No daily routine has been set up yet. Ask a caregiver to add one before playing this game.,,
+Routine Recall,Button,Set up routine,,
+Daily Routine (caregiver screen),Title bar,Daily Routine,,
+Daily Routine (caregiver screen),Helper text at the top of the screen,"Enter the steps of a typical day, in order (e.g. Wake up, Breakfast, Take medicine...). Routine Recall quizzes on this same order.",,
+Daily Routine (caregiver screen),Button,Add step,,
+Daily Routine (caregiver screen),Button,Save,,
+Daily Routine (caregiver screen),Error message,Please enter at least {min} steps.,,{min} is a number - translate only the surrounding words
+Daily Routine (caregiver screen),Confirmation pop-up after saving,Daily routine saved,,
+Reminders,Status label shown next to a not-yet-due reminder,Upcoming,,
+Settings,Button (replaces the old "Settings coming soon" placeholder),Edit Daily Routine,,
+Settings,Label above the language picker,Language,,

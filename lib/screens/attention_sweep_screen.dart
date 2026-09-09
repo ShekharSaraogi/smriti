@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
 import '../difficulty/difficulty_engine.dart';
+import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
 
 class AttentionSweepScreen extends StatefulWidget {
@@ -134,9 +135,12 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Well done!'),
+        title: Text(AppStrings.t('well_done_title')),
         content: Text(
-          'You got $_correctCount of $_totalAttempts correct.',
+          AppStrings.t('correct_of_total_message', {
+            'correct': '$_correctCount',
+            'total': '$_totalAttempts',
+          }),
           style: const TextStyle(fontSize: 18),
         ),
         actions: [
@@ -152,7 +156,10 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
               });
               _loadRealTier();
             },
-            child: const Text('Play again', style: TextStyle(fontSize: 18)),
+            child: Text(
+              AppStrings.t('play_again_button'),
+              style: const TextStyle(fontSize: 18),
+            ),
           ),
         ],
       ),
@@ -170,25 +177,33 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
     final canAnswer = _feedback == null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Attention Sweep')),
+      appBar: AppBar(title: Text(AppStrings.t('attention_sweep_title'))),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Text(
-              'Round ${_roundIndex + 1} of $_totalRounds  •  Level $_currentTier',
+              '${AppStrings.t('round_progress', {
+                    'n': '${_roundIndex + 1}',
+                    'total': '$_totalRounds',
+                  })}  •  ${AppStrings.t('level_label', {
+                    'tier': '$_currentTier',
+                  })}',
               style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 8),
             Text(
-              'Time left: $_timeLeft s',
+              AppStrings.t('time_left_label', {'seconds': '$_timeLeft'}),
               style: TextStyle(
                 fontSize: 20,
                 color: _timeLeft <= 2 ? Colors.red : Colors.black87,
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Tap the different one', style: TextStyle(fontSize: 20)),
+            Text(
+              AppStrings.t('attention_sweep_instruction'),
+              style: const TextStyle(fontSize: 20),
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: GridView.builder(
@@ -227,10 +242,10 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   _feedback == 'correct'
-                      ? 'Correct!'
+                      ? AppStrings.t('correct_feedback')
                       : _feedback == 'timeout'
-                          ? "Time's up — next one"
-                          : 'Not quite — next one',
+                          ? AppStrings.t('feedback_timeout')
+                          : AppStrings.t('feedback_wrong_next'),
                   style: TextStyle(
                     fontSize: 20,
                     color: _feedback == 'correct' ? Colors.green : Colors.red,

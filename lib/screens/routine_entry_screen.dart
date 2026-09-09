@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
+import '../l10n/app_strings.dart';
 
 // Where a caregiver types in the patient's typical daily routine, in
 // order (e.g. Wake up, Breakfast, Take medicine, ...). Stored as a JSON
@@ -79,7 +80,9 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
 
     if (steps.length < _minSteps) {
       setState(() {
-        _saveError = 'Please enter at least $_minSteps steps.';
+        _saveError = AppStrings.t('routine_min_steps_error', {
+          'min': '$_minSteps',
+        });
       });
       return;
     }
@@ -91,7 +94,7 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Daily routine saved')),
+      SnackBar(content: Text(AppStrings.t('routine_saved_snackbar'))),
     );
     Navigator.pop(context);
   }
@@ -108,22 +111,20 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Daily Routine')),
+        appBar: AppBar(title: Text(AppStrings.t('routine_entry_title'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Daily Routine')),
+      appBar: AppBar(title: Text(AppStrings.t('routine_entry_title'))),
       body: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Text(
-              'Enter the steps of a typical day, in order (e.g. Wake up, '
-              'Breakfast, Take medicine...). Routine Recall quizzes on '
-              'this same order.',
-              style: TextStyle(fontSize: 16),
+              AppStrings.t('routine_entry_helper'),
+              style: const TextStyle(fontSize: 16),
             ),
           ),
           Expanded(
@@ -178,9 +179,9 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _addStep,
-                    child: const Text(
-                      'Add step',
-                      style: TextStyle(fontSize: 18),
+                    child: Text(
+                      AppStrings.t('add_step_button'),
+                      style: const TextStyle(fontSize: 18),
                     ),
                   ),
                 ),
@@ -188,7 +189,10 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _save,
-                    child: const Text('Save', style: TextStyle(fontSize: 18)),
+                    child: Text(
+                      AppStrings.t('save_button'),
+                      style: const TextStyle(fontSize: 18),
+                    ),
                   ),
                 ),
               ],

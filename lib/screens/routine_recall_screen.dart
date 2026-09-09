@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
 import '../difficulty/difficulty_engine.dart';
+import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
 import 'routine_entry_screen.dart';
 
@@ -200,9 +201,12 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Well done!'),
+        title: Text(AppStrings.t('well_done_title')),
         content: Text(
-          'You got $_correctCount of $_totalAttempts correct.',
+          AppStrings.t('correct_of_total_message', {
+            'correct': '$_correctCount',
+            'total': '$_totalAttempts',
+          }),
           style: const TextStyle(fontSize: 18),
         ),
         actions: [
@@ -212,7 +216,10 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
               setState(_dealRound);
               _loadRealTier();
             },
-            child: const Text('Play again', style: TextStyle(fontSize: 18)),
+            child: Text(
+              AppStrings.t('play_again_button'),
+              style: const TextStyle(fontSize: 18),
+            ),
           ),
         ],
       ),
@@ -233,24 +240,23 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
   Widget build(BuildContext context) {
     if (_isLoadingRoutine) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Routine Recall')),
+        appBar: AppBar(title: Text(AppStrings.t('routine_recall_title'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_routineSteps.length < _minRoutineSteps) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Routine Recall')),
+        appBar: AppBar(title: Text(AppStrings.t('routine_recall_title'))),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'No daily routine has been set up yet. Ask a caregiver '
-                  'to add one before playing this game.',
-                  style: TextStyle(fontSize: 18),
+                Text(
+                  AppStrings.t('routine_recall_not_set_up'),
+                  style: const TextStyle(fontSize: 18),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -260,7 +266,7 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
                     textStyle: const TextStyle(fontSize: 20),
                   ),
                   onPressed: _goToRoutineEntry,
-                  child: const Text('Set up routine'),
+                  child: Text(AppStrings.t('set_up_routine_button')),
                 ),
               ],
             ),
@@ -272,19 +278,28 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
     final canAnswer = _feedback == null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Routine Recall')),
+      appBar: AppBar(title: Text(AppStrings.t('routine_recall_title'))),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
-              'Round ${_roundIndex + 1} of ${_roundOrder.length}  •  '
-              'Level $_currentTier',
+              '${AppStrings.t('round_progress', {
+                    'n': '${_roundIndex + 1}',
+                    'total': '${_roundOrder.length}',
+                  })}  •  ${AppStrings.t('level_label', {
+                    'tier': '$_currentTier',
+                  })}',
               style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 24),
             Text(
-              'After "$_currentPromptStep", what comes next?',
+              // The routine step text itself is whatever the caregiver
+              // typed in — not translated, since it's free-form user
+              // content, not app UI text.
+              AppStrings.t('routine_recall_prompt', {
+                'step': _currentPromptStep,
+              }),
               style: const TextStyle(fontSize: 22),
               textAlign: TextAlign.center,
             ),
@@ -309,7 +324,9 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  _feedback == 'correct' ? 'Correct!' : 'Not quite — next one',
+                  _feedback == 'correct'
+                      ? AppStrings.t('correct_feedback')
+                      : AppStrings.t('feedback_wrong_next'),
                   style: TextStyle(
                     fontSize: 20,
                     color: _feedback == 'correct' ? Colors.green : Colors.red,
