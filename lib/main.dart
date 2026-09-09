@@ -9,6 +9,7 @@ import 'notifications/notification_service.dart';
 import 'screens/home_screen.dart';
 import 'sync/supabase_config.dart';
 import 'sync/sync_service.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   // Needed before calling plugin code (notifications setup) prior to
@@ -60,6 +61,7 @@ class _SmritiAppState extends State<SmritiApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: AppStrings.t('app_name'),
+      theme: AppTheme.light,
       home: const HomeScreen(),
     );
   }

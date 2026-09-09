@@ -8,6 +8,7 @@ import '../db/database_helper.dart';
 import '../difficulty/difficulty_engine.dart';
 import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
+import '../utils/routine_visuals.dart';
 import 'routine_entry_screen.dart';
 
 // Quizzes the patient on the order of their own daily routine: "after
@@ -279,7 +280,11 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.t('routine_recall_title'))),
-      body: Padding(
+      // Scrollable rather than a fixed Column: adding the emoji cue and
+      // icon+label choice buttons made this content taller than it used to
+      // be, and a long typed-in routine step can wrap to 2 lines, so a
+      // rigid layout could clip content on shorter screens.
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
@@ -292,7 +297,15 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
                   })}',
               style: const TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
+            // The picture for the step already being asked about — a real
+            // daily-schedule cue, not decoration, so the patient can
+            // recognize it even on a day reading is hard.
+            Text(
+              routineStepEmoji(_currentPromptStep),
+              style: const TextStyle(fontSize: 64),
+            ),
+            const SizedBox(height: 12),
             Text(
               // The routine step text itself is whatever the caregiver
               // typed in — not translated, since it's free-form user
@@ -303,7 +316,7 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
               style: const TextStyle(fontSize: 22),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             ..._currentChoices.map(
               (choice) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -315,7 +328,19 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
                       textStyle: const TextStyle(fontSize: 18),
                     ),
                     onPressed: canAnswer ? () => _handleAnswer(choice) : null,
-                    child: Text(choice),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          routineStepEmoji(choice),
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(choice, textAlign: TextAlign.center),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_strings.dart';
+import '../widgets/menu_button.dart';
 import 'games_screen.dart';
 import 'reminders_screen.dart';
 import 'settings_screen.dart';
@@ -16,46 +17,37 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
+            MenuButton(
+              icon: Icons.videogame_asset_rounded,
+              label: AppStrings.t('home_games_button'),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const GamesScreen()),
                 );
               },
-              child: Text(AppStrings.t('home_games_button')),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
+            MenuButton(
+              icon: Icons.alarm_rounded,
+              label: AppStrings.t('home_reminders_button'),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const RemindersScreen()),
                 );
               },
-              child: Text(AppStrings.t('home_reminders_button')),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
+            MenuButton(
+              icon: Icons.settings_rounded,
+              label: AppStrings.t('home_settings_button'),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SettingsScreen()),
                 );
               },
-              child: Text(AppStrings.t('home_settings_button')),
             ),
           ],
         ),

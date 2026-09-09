@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_strings.dart';
+import '../widgets/menu_button.dart';
 import 'attention_sweep_screen.dart';
 import 'memory_match_screen.dart';
 import 'pattern_voice_screen.dart';
@@ -17,11 +18,12 @@ class GamesScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
+            // Same icon per game as the caregiver dashboard's game cards
+            // (lib/dashboard/dashboard_theme.dart gameIcons) — one visual
+            // identity per game across both apps.
+            MenuButton(
+              icon: Icons.grid_view_rounded,
+              label: AppStrings.t('games_memory_match_button'),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -30,14 +32,11 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Text(AppStrings.t('games_memory_match_button')),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
+            MenuButton(
+              icon: Icons.mic_rounded,
+              label: AppStrings.t('games_pattern_voice_button'),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -46,14 +45,11 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Text(AppStrings.t('games_pattern_voice_button')),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
+            MenuButton(
+              icon: Icons.center_focus_strong_rounded,
+              label: AppStrings.t('games_attention_sweep_button'),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -62,14 +58,11 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Text(AppStrings.t('games_attention_sweep_button')),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(240, 64),
-                textStyle: const TextStyle(fontSize: 20),
-              ),
+            MenuButton(
+              icon: Icons.checklist_rounded,
+              label: AppStrings.t('games_routine_recall_button'),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -78,7 +71,6 @@ class GamesScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Text(AppStrings.t('games_routine_recall_button')),
             ),
           ],
         ),

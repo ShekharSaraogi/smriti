@@ -30,6 +30,19 @@ Future<void> _seedRoutine(WidgetTester tester, List<String> steps) async {
   });
 }
 
+/// The visible label of the Nth ElevatedButton on screen. Each button's
+/// child is a Row of [emoji, label] (see RoutineRecallScreen), so the
+/// label is the last Text descendant rather than the button's own child.
+String _buttonLabel(WidgetTester tester, int index) {
+  final texts = tester.widgetList<Text>(
+    find.descendant(
+      of: find.byType(ElevatedButton).at(index),
+      matching: find.byType(Text),
+    ),
+  );
+  return texts.last.data!;
+}
+
 Future<void> _pumpGame(WidgetTester tester) async {
   await tester.pumpWidget(
     const MaterialApp(home: RoutineRecallScreen()),
@@ -83,10 +96,13 @@ void main() {
       final promptText = tester.widget<Text>(promptFinder).data!;
       final promptStep = _routine.firstWhere((s) => promptText.contains(s));
 
-      final choiceButtons = tester
-          .widgetList<ElevatedButton>(find.byType(ElevatedButton))
-          .map((b) => (b.child! as Text).data)
-          .toList();
+      // Each button's child is now a Row of [emoji, label] rather than a
+      // bare Text, so the label is read back as the last Text descendant
+      // of each button instead of casting the button's child directly.
+      final buttonCount = find.byType(ElevatedButton).evaluate().length;
+      final choiceButtons = [
+        for (var i = 0; i < buttonCount; i++) _buttonLabel(tester, i),
+      ];
       expect(
         choiceButtons,
         isNot(contains(promptStep)),

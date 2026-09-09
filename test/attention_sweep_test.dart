@@ -20,15 +20,27 @@ Future<void> _pumpGame(WidgetTester tester) async {
   await tester.pump();
 }
 
-/// Finds which cell is currently the odd one out by inspecting the icons.
+/// Finds which cell is currently the odd one out. Each round uses a
+/// different real-object pair (see AttentionSweepScreen._objectPairs), so
+/// rather than hardcoding one emoji, this finds the cell whose picture
+/// differs from the majority — same idea as a player visually scanning
+/// the grid for the one that doesn't match the rest.
 int _findOddCell(WidgetTester tester, int cellCount) {
-  for (var i = 0; i < cellCount; i++) {
-    final icon = tester.widget<Icon>(
-      find.descendant(of: _cell(i), matching: find.byType(Icon)),
-    );
-    if (icon.icon == Icons.star) return i;
+  final textByIndex = <int, String>{
+    for (var i = 0; i < cellCount; i++)
+      i: tester
+          .widget<Text>(
+            find.descendant(of: _cell(i), matching: find.byType(Text)),
+          )
+          .data!,
+  };
+  final counts = <String, int>{};
+  for (final text in textByIndex.values) {
+    counts[text] = (counts[text] ?? 0) + 1;
   }
-  throw StateError('No odd cell found among $cellCount cells');
+  final oddText =
+      counts.entries.firstWhere((entry) => entry.value == 1).key;
+  return textByIndex.entries.firstWhere((e) => e.value == oddText).key;
 }
 
 void main() {

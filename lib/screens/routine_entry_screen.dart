@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
 import '../l10n/app_strings.dart';
+import '../utils/routine_visuals.dart';
 
 // Where a caregiver types in the patient's typical daily routine, in
 // order (e.g. Wake up, Breakfast, Take medicine, ...). Stored as a JSON
@@ -139,6 +140,18 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
                       Text(
                         '${index + 1}.',
                         style: const TextStyle(fontSize: 18),
+                      ),
+                      const SizedBox(width: 8),
+                      // Live preview of the picture this step will show in
+                      // Routine Recall — lets the caregiver see right away
+                      // that "Take morning medicine" becomes a pill icon,
+                      // and reword it if the picture doesn't feel right.
+                      AnimatedBuilder(
+                        animation: _controllers[index],
+                        builder: (context, _) => Text(
+                          routineStepEmoji(_controllers[index].text),
+                          style: const TextStyle(fontSize: 22),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(

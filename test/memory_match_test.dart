@@ -3,28 +3,25 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:smriti/screens/memory_match_screen.dart';
 
-const List<IconData> _symbols = [
-  Icons.local_florist,
-  Icons.pets,
-  Icons.umbrella,
-];
+const List<String> _symbols = ['☕', '🍽️', '💊'];
 
 Finder _card(int index) => find.byKey(ValueKey('card_$index'));
 
-/// How many card faces are currently showing a picture.
+/// How many card faces are currently showing a picture (as opposed to the
+/// face-down "?" mark).
 int _visibleFaces(WidgetTester tester) {
   return tester
-      .widgetList<Icon>(find.byType(Icon))
-      .where((icon) => _symbols.contains(icon.icon))
+      .widgetList<Text>(find.byType(Text))
+      .where((text) => _symbols.contains(text.data))
       .length;
 }
 
 /// The picture on a face-up card.
-IconData _symbolAt(WidgetTester tester, int index) {
-  final icon = tester.widget<Icon>(
-    find.descendant(of: _card(index), matching: find.byType(Icon)),
+String _symbolAt(WidgetTester tester, int index) {
+  final text = tester.widget<Text>(
+    find.descendant(of: _card(index), matching: find.byType(Text)),
   );
-  return icon.icon!;
+  return text.data!;
 }
 
 Future<void> _pumpGame(WidgetTester tester) async {
@@ -103,7 +100,7 @@ void main() {
     // A "learning" pair can itself turn out to be a real match by luck — if
     // that finishes the round early, stop right there rather than tapping
     // cards that are now hidden behind the completion dialog.
-    final symbolByIndex = <int, IconData>{};
+    final symbolByIndex = <int, String>{};
     for (var i = 0; i < 6 && !roundComplete(); i += 2) {
       await tester.tap(_card(i));
       await tester.pump();
@@ -116,7 +113,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1500));
     }
 
-    final indicesBySymbol = <IconData, List<int>>{};
+    final indicesBySymbol = <String, List<int>>{};
     symbolByIndex.forEach((index, symbol) {
       indicesBySymbol.putIfAbsent(symbol, () => []).add(index);
     });

@@ -7,6 +7,7 @@ import '../db/database_helper.dart';
 import '../difficulty/difficulty_engine.dart';
 import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
+import '../theme/app_theme.dart';
 
 class AttentionSweepScreen extends StatefulWidget {
   const AttentionSweepScreen({super.key});
@@ -17,9 +18,22 @@ class AttentionSweepScreen extends StatefulWidget {
 
 class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
   static const String _gameType = 'attention_sweep';
-  static const IconData _commonIcon = Icons.circle;
-  static const IconData _oddIcon = Icons.star;
   static const int _totalRounds = 5;
+
+  // (common, odd) real-object pairs to spot the different one among — the
+  // same "find the one that doesn't belong" visual-search task as a plain
+  // circle vs. star, but dressed as recognizable daily objects instead of
+  // abstract shapes. A new pair is picked each round purely for variety;
+  // it has no effect on difficulty, which still comes entirely from
+  // _cellCountForTier/_timeLimitForTier below.
+  static const List<List<String>> _objectPairs = [
+    ['☕', '🍵'],
+    ['🍎', '🍊'],
+    ['👟', '🥿'],
+    ['🌞', '🌙'],
+    ['🐶', '🐱'],
+    ['🚗', '🚕'],
+  ];
 
   int? _patientId;
   int _currentTier = DifficultyEngine.minTier;
@@ -29,6 +43,7 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
   int _totalAttempts = 0;
   int _cellCount = 4;
   int _oddCellIndex = 0;
+  List<String> _currentPair = _objectPairs.first;
   int _timeLeft = 8;
   Timer? _countdownTimer;
   String? _feedback; // 'correct', 'wrong', or null while awaiting a tap
@@ -71,6 +86,7 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
     _countdownTimer?.cancel();
     _cellCount = _cellCountForTier(_currentTier);
     _oddCellIndex = _random.nextInt(_cellCount);
+    _currentPair = _objectPairs[_random.nextInt(_objectPairs.length)];
     _timeLeft = _timeLimitForTier(_currentTier);
     _feedback = null;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -223,14 +239,17 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
                         : null,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.indigo.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.indigo.shade200),
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
                       ),
-                      child: Icon(
-                        isOdd ? _oddIcon : _commonIcon,
-                        size: 40,
-                        color: Colors.indigo,
+                      child: Center(
+                        child: Text(
+                          isOdd ? _currentPair[1] : _currentPair[0],
+                          style: const TextStyle(fontSize: 40),
+                        ),
                       ),
                     ),
                   );

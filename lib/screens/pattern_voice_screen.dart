@@ -9,6 +9,7 @@ import '../difficulty/difficulty_engine.dart';
 import '../l10n/app_strings.dart';
 import '../l10n/locale_controller.dart';
 import '../sync/sync_service.dart';
+import '../theme/app_theme.dart';
 
 class PatternVoiceScreen extends StatefulWidget {
   const PatternVoiceScreen({super.key});
@@ -20,11 +21,14 @@ class PatternVoiceScreen extends StatefulWidget {
 class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
   // Keys, not literal English text — the button label AND the word speech
   // recognition compares against both come from AppStrings.t(key), so they
-  // always match whatever language is currently selected.
+  // always match whatever language is currently selected. Emoji instead of
+  // line icons for the same reason as the other games: a real, colorful
+  // picture of the object is easier to recognize and name than an abstract
+  // outline.
   static const _prompts = [
-    {'key': 'object_flower', 'icon': Icons.local_florist},
-    {'key': 'object_umbrella', 'icon': Icons.umbrella},
-    {'key': 'object_bird', 'icon': Icons.flutter_dash},
+    {'key': 'object_flower', 'emoji': '🌸'},
+    {'key': 'object_umbrella', 'emoji': '☂️'},
+    {'key': 'object_bird', 'emoji': '🐦'},
   ];
 
   // Best-effort locale codes for the phone's own TTS/speech-recognition
@@ -282,7 +286,7 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
               style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 24),
-            Icon(prompt['icon'] as IconData, size: 100, color: Colors.indigo),
+            Text(prompt['emoji'] as String, style: const TextStyle(fontSize: 100)),
             const SizedBox(height: 24),
             Text(
               AppStrings.t('question_spoken'),
@@ -314,7 +318,7 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
             const SizedBox(height: 8),
             IconButton(
               iconSize: 64,
-              color: _isListening ? Colors.red : Colors.indigo,
+              color: _isListening ? Colors.red : AppColors.primary,
               icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
               onPressed: canAnswer && _speechAvailable
                   ? _startListening

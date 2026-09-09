@@ -6,6 +6,7 @@ import '../db/database_helper.dart';
 import '../difficulty/difficulty_engine.dart';
 import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
+import '../theme/app_theme.dart';
 
 class MemoryMatchScreen extends StatefulWidget {
   const MemoryMatchScreen({super.key});
@@ -15,16 +16,21 @@ class MemoryMatchScreen extends StatefulWidget {
 }
 
 class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
-  // 7 is enough for the hardest tier (5 + 2 pairs). Adding a tier later
-  // only means adding icons here, nothing else changes.
-  static const List<IconData> _symbols = [
-    Icons.local_florist,
-    Icons.pets,
-    Icons.umbrella,
-    Icons.wb_sunny,
-    Icons.star,
-    Icons.cake,
-    Icons.anchor,
+  // Everyday objects from a patient's own daily routine, not abstract
+  // shapes — recognizing a real cup or a real medicine bottle is the
+  // actual cognitive skill this game is meant to exercise, and it's more
+  // engaging to look at than a generic star or anchor. 8 is enough
+  // headroom for the hardest tier (5 + 2 = 7 pairs); adding a tier later
+  // only means adding another emoji here, nothing else changes.
+  static const List<String> _symbols = [
+    '☕', // cup
+    '🍽️', // plate
+    '💊', // medicine
+    '🪥', // toothbrush
+    '👕', // shirt
+    '⏰', // clock
+    '📖', // book
+    '🛏️', // bed
   ];
 
   static const String _gameType = 'memory_match';
@@ -33,7 +39,7 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
   // slow: the target user reads and reacts slowly on a bad day.
   static const Duration _mismatchPause = Duration(milliseconds: 1200);
 
-  late List<IconData> _cards;
+  late List<String> _cards;
   late List<bool> _isFlipped;
   late List<bool> _isMatched;
 
@@ -251,24 +257,36 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                           ? Colors.green.shade100
                           : isFaceUp
                               ? Colors.white
-                              : Colors.indigo,
-                      borderRadius: BorderRadius.circular(12),
+                              : AppColors.primary,
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isMatched
                             ? Colors.green.shade400
-                            : Colors.indigo.shade200,
+                            : AppColors.primaryDark,
+                        width: isFaceUp ? 1 : 2,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.ink.withValues(alpha: 0.12),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: isFaceUp
-                          ? Icon(
+                          ? Text(
                               _cards[index],
-                              size: 40,
-                              color: isMatched
-                                  ? Colors.green.shade800
-                                  : Colors.indigo,
+                              style: const TextStyle(fontSize: 40),
                             )
-                          : null,
+                          : const Text(
+                              '?',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 );
