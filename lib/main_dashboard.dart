@@ -33,11 +33,19 @@ class DashboardApp extends StatelessWidget {
       title: 'Smriti Dashboard',
       theme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.light,
         scaffoldBackgroundColor: DashboardColors.background,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: DashboardColors.primary,
+          seedColor: DashboardColors.accent,
+          brightness: Brightness.light,
+        ).copyWith(
+          surface: DashboardColors.surface,
+          onSurface: DashboardColors.ink,
         ),
-        fontFamily: 'Roboto',
+        fontFamily: 'IBMPlexSans',
+        dropdownMenuTheme: const DropdownMenuThemeData(
+          textStyle: TextStyle(fontFamily: 'IBMPlexSans', color: DashboardColors.ink),
+        ),
       ),
       home: const DashboardHomeScreen(),
     );

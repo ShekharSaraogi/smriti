@@ -15,6 +15,10 @@ class AccuracyTrendChart extends StatelessWidget {
       for (var i = 0; i < points.length; i++)
         FlSpot(i.toDouble(), points[i].accuracy * 100),
     ];
+    final today = points.last;
+    final todayLabel = today.accuracy == 0 && today.sessionCount == 0
+        ? '—'
+        : '${(today.accuracy * 100).round()}%';
 
     return DashboardCard(
       child: Column(
@@ -23,50 +27,29 @@ class AccuracyTrendChart extends StatelessWidget {
           Row(
             children: [
               const Expanded(
-                child: Text(
-                  'Accuracy — last 7 days',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: DashboardColors.ink,
-                  ),
-                ),
+                child: Text('7-DAY ACCURACY', style: DashboardTextStyles.label),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: DashboardColors.good.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: const BoxDecoration(
+                  color: DashboardColors.live,
+                  shape: BoxShape.circle,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: DashboardColors.good,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Today: ${points.last.accuracy == 0 && points.last.sessionCount == 0 ? '—' : '${(points.last.accuracy * 100).round()}%'}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: DashboardColors.good,
-                      ),
-                    ),
-                  ],
+              ),
+              Text(
+                'TODAY $todayLabel',
+                style: DashboardTextStyles.monoSmall.copyWith(
+                  color: DashboardColors.live,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
           SizedBox(
-            height: 200,
+            height: 180,
             child: LineChart(
               LineChartData(
                 minY: 0,
@@ -75,7 +58,7 @@ class AccuracyTrendChart extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: 25,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: DashboardColors.inkMuted.withValues(alpha: 0.12),
+                    color: DashboardColors.border,
                     strokeWidth: 1,
                   ),
                 ),
@@ -91,20 +74,17 @@ class AccuracyTrendChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       interval: 25,
-                      reservedSize: 36,
+                      reservedSize: 34,
                       getTitlesWidget: (value, meta) => Text(
-                        '${value.toInt()}%',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: DashboardColors.inkMuted,
-                        ),
+                        '${value.toInt()}',
+                        style: DashboardTextStyles.monoSmall,
                       ),
                     ),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 28,
+                      reservedSize: 24,
                       interval: 1,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
@@ -116,9 +96,8 @@ class AccuracyTrendChart extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 6),
                           child: Text(
                             _weekdayLabel(day.weekday),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: DashboardColors.inkMuted,
+                            style: DashboardTextStyles.bodyMuted.copyWith(
+                              fontSize: 10,
                             ),
                           ),
                         );
@@ -128,13 +107,13 @@ class AccuracyTrendChart extends StatelessWidget {
                 ),
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (_) => DashboardColors.ink,
+                    getTooltipColor: (_) => DashboardColors.surfaceRaised,
                     getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
                       return LineTooltipItem(
                         '${spot.y.round()}%',
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                        DashboardTextStyles.monoSmall.copyWith(
+                          color: DashboardColors.ink,
+                          fontWeight: FontWeight.w700,
                         ),
                       );
                     }).toList(),
@@ -145,8 +124,8 @@ class AccuracyTrendChart extends StatelessWidget {
                     spots: spots,
                     isCurved: true,
                     curveSmoothness: 0.3,
-                    color: DashboardColors.primary,
-                    barWidth: 3,
+                    color: DashboardColors.accent,
+                    barWidth: 2.5,
                     dotData: FlDotData(
                       // Today's point (the last one) stands out from the
                       // rest — it's the number that actually matters most
@@ -154,12 +133,13 @@ class AccuracyTrendChart extends StatelessWidget {
                       getDotPainter: (spot, percent, bar, index) {
                         final isToday = index == points.length - 1;
                         return FlDotCirclePainter(
-                          radius: isToday ? 6 : 3.5,
+                          radius: isToday ? 5 : 3,
                           color: isToday
-                              ? DashboardColors.good
-                              : DashboardColors.primary,
-                          strokeWidth: isToday ? 3 : 2,
-                          strokeColor: Colors.white,
+                              ? DashboardColors.live
+                              : DashboardColors.accent,
+                          strokeWidth: isToday ? 3 : 0,
+                          strokeColor:
+                              DashboardColors.live.withValues(alpha: 0.25),
                         );
                       },
                     ),
@@ -169,8 +149,8 @@ class AccuracyTrendChart extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          DashboardColors.primary.withValues(alpha: 0.25),
-                          DashboardColors.primary.withValues(alpha: 0.0),
+                          DashboardColors.accent.withValues(alpha: 0.22),
+                          DashboardColors.accent.withValues(alpha: 0.0),
                         ],
                       ),
                     ),
@@ -185,7 +165,7 @@ class AccuracyTrendChart extends StatelessWidget {
   }
 
   static String _weekdayLabel(int weekday) {
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const labels = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return labels[weekday - 1];
   }
 }

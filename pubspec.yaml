@@ -100,3 +100,38 @@ flutter:
           weight: 600
         - asset: assets/fonts/WorkSans.ttf
           weight: 700
+    # Caregiver dashboard only — a distinct type system from the patient
+    # app's (Baloo2/WorkSans) since it's a separate, unrelated audience.
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/Sora.ttf
+          weight: 500
+        - asset: assets/fonts/Sora.ttf
+          weight: 600
+        - asset: assets/fonts/Sora.ttf
+          weight: 700
+        - asset: assets/fonts/Sora.ttf
+          weight: 800
+    # Monospace, tabular-figure numerals for live metrics and timestamps —
+    # the same convention real monitoring dashboards (Grafana, Datadog,
+    # Stripe) use to signal "this is a measured number," not a
+    # decoration.
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono.ttf
+          weight: 500
+        - asset: assets/fonts/JetBrainsMono.ttf
+          weight: 700
+    # Dashboard body text — a technical, data-tool character (from the
+    # same family lineage as JetBrains Mono) rather than WorkSans' warmer,
+    # more humanist feel, which reads better on the patient app than here.
+    - family: IBMPlexSans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSans.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSans.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSans.ttf
+          weight: 700

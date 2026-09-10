@@ -19,20 +19,10 @@ class ReminderSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Reminders',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: DashboardColors.ink,
-            ),
-          ),
+          const Text('REMINDERS', style: DashboardTextStyles.label),
           const SizedBox(height: 16),
           if (missed.isEmpty && upcoming.isEmpty)
-            const Text(
-              'No reminders yet',
-              style: TextStyle(color: DashboardColors.inkMuted),
-            ),
+            const Text('No reminders yet', style: DashboardTextStyles.bodyMuted),
           for (final reminder in missed)
             _ReminderRow(reminder: reminder, isMissed: true),
           for (final reminder in upcoming)
@@ -70,19 +60,14 @@ class _ReminderRow extends StatelessWidget {
           Expanded(
             child: Text(
               reminder.type[0].toUpperCase() + reminder.type.substring(1),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: DashboardColors.ink,
-              ),
+              style: DashboardTextStyles.body.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           Text(
             isMissed ? 'Missed — $timeLabel' : timeLabel,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+            style: DashboardTextStyles.monoSmall.copyWith(
               color: color,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

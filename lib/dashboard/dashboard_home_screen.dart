@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'dashboard_data.dart';
 import 'dashboard_theme.dart';
 import 'widgets/accuracy_trend_chart.dart';
 import 'widgets/game_summary_card.dart';
+import 'widgets/recent_activity_feed.dart';
 import 'widgets/reminder_section.dart';
 import 'widgets/stat_card.dart';
 
@@ -20,11 +23,33 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   DashboardSnapshot? _snapshot;
   bool _isLoading = true;
   String? _error;
+  DateTime _now = DateTime.now();
+
+  // Two separate timers rather than one: _tickTimer just repaints "3s ago"
+  // / "just now" labels using the wall clock, which is nearly free and
+  // needs to happen every second to feel live; _pollTimer is the one that
+  // actually re-hits Supabase, on a much longer interval so an idle
+  // dashboard left open during a demo doesn't hammer the database.
+  Timer? _tickTimer;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _loadPatients();
+    _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (_selectedPatient != null) _loadSnapshot(_selectedPatient!, silent: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _tickTimer?.cancel();
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadPatients() async {
@@ -53,24 +78,35 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     }
   }
 
-  Future<void> _loadSnapshot(Patient patient) async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  // [silent] skips the loading-spinner state change — used by the
+  // background poll timer so a routine auto-refresh never flashes the
+  // whole dashboard back to a spinner while someone's looking at it.
+  Future<void> _loadSnapshot(Patient patient, {bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
     try {
       final snapshot = await DashboardDataService.fetchSnapshot(patient);
       if (!mounted) return;
       setState(() {
         _snapshot = snapshot;
         _isLoading = false;
+        _now = DateTime.now();
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _error = 'Could not load data for ${patient.name}: $e';
-      });
+      // A silent background poll failing (e.g. a momentary network blip)
+      // shouldn't rip away a perfectly good, already-displayed snapshot —
+      // only a foreground load shows the error state.
+      if (!silent) {
+        setState(() {
+          _isLoading = false;
+          _error = 'Could not load data for ${patient.name}: $e';
+        });
+      }
     }
   }
 
@@ -78,12 +114,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DashboardColors.background,
-      // SafeArea deliberately doesn't wrap the whole body — the hero
-      // banner is meant to bleed behind the status bar for a full-bleed
-      // look, rather than leaving a plain background-colored gap above a
-      // banner that starts too low. Its own padding accounts for the
-      // status bar height directly instead.
       body: RefreshIndicator(
+        color: DashboardColors.live,
+        backgroundColor: DashboardColors.surface,
         onRefresh: () => _selectedPatient == null
             ? _loadPatients()
             : _loadSnapshot(_selectedPatient!),
@@ -93,11 +126,15 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
-    // These 3 states have no hero banner, so they stay safely inset as
+    // These 3 states have no hero header, so they stay safely inset as
     // usual — only the loaded-content state below deliberately bleeds its
-    // banner behind the status bar.
+    // header behind the status bar.
     if (_isLoading && _snapshot == null) {
-      return const SafeArea(child: Center(child: CircularProgressIndicator()));
+      return const SafeArea(
+        child: Center(
+          child: CircularProgressIndicator(color: DashboardColors.live),
+        ),
+      );
     }
 
     if (_error != null) {
@@ -111,7 +148,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: DashboardColors.inkMuted),
+              style: DashboardTextStyles.bodyMuted,
             ),
             const SizedBox(height: 16),
             Center(
@@ -137,7 +174,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
               'No patients have synced yet. Once someone plays a round on '
               'their phone, they\'ll show up here.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: DashboardColors.inkMuted),
+              style: DashboardTextStyles.bodyMuted,
             ),
           ],
         ),
@@ -149,7 +186,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        _buildHeroHeader(context),
+        _buildHeroHeader(context, snapshot),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
           child: Column(
@@ -175,7 +212,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   ),
                   StatCard(
                     icon: Icons.sports_esports_rounded,
-                    color: DashboardColors.primary,
+                    color: DashboardColors.accent,
                     value: snapshot.sessionsLast7Days,
                     label: 'Rounds this week',
                   ),
@@ -184,14 +221,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
               const SizedBox(height: 16),
               AccuracyTrendChart(points: snapshot.last7DayTrend),
               const SizedBox(height: 16),
-              const Text(
-                'By game',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: DashboardColors.ink,
-                ),
-              ),
+              RecentActivityFeed(entries: snapshot.recentActivity, now: _now),
+              const SizedBox(height: 16),
+              const Text('BY GAME', style: DashboardTextStyles.label),
               const SizedBox(height: 12),
               _responsiveCardRow(
                 context,
@@ -243,92 +275,137 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 
-  Widget _buildHeroHeader(BuildContext context) {
+  Widget _buildHeroHeader(BuildContext context, DashboardSnapshot snapshot) {
     final patient = _selectedPatient!;
+    final secondsSinceSync = _now.difference(snapshot.fetchedAt).inSeconds;
+    final syncedLabel = secondsSinceSync < 3
+        ? 'synced just now'
+        : secondsSinceSync < 60
+            ? 'synced ${secondsSinceSync}s ago'
+            : 'synced ${secondsSinceSync ~/ 60}m ago';
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [DashboardColors.primary, DashboardColors.primaryDeep],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
+        color: DashboardColors.surface,
+        border: Border(bottom: BorderSide(color: DashboardColors.border)),
       ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            child: Text(
-              patient.name.isNotEmpty ? patient.name[0].toUpperCase() : '?',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: DashboardColors.accent.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  patient.name.isNotEmpty ? patient.name[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    fontFamily: 'Sora',
+                    color: DashboardColors.accent,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  patient.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    patient.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DashboardTextStyles.headline,
                   ),
-                ),
-                Text(
-                  'Smriti — Caregiver Dashboard',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.75),
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const _LivePulseDot(),
+                      const SizedBox(width: 6),
+                      Text(syncedLabel, style: DashboardTextStyles.monoSmall),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (_patients.length > 1)
-            DropdownButton<Patient>(
-              value: _selectedPatient,
-              underline: const SizedBox.shrink(),
-              dropdownColor: DashboardColors.primaryDeep,
-              iconEnabledColor: Colors.white,
-              items: _patients
-                  .map(
-                    (p) => DropdownMenuItem(
-                      value: p,
-                      child: Text(
-                        p.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white),
+            if (_patients.length > 1)
+              DropdownButton<Patient>(
+                value: _selectedPatient,
+                underline: const SizedBox.shrink(),
+                dropdownColor: DashboardColors.surfaceRaised,
+                iconEnabledColor: DashboardColors.inkMuted,
+                style: DashboardTextStyles.body,
+                items: _patients
+                    .map(
+                      (p) => DropdownMenuItem(
+                        value: p,
+                        child: Text(p.name, overflow: TextOverflow.ellipsis),
                       ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (patient) {
-                if (patient == null) return;
-                setState(() => _selectedPatient = patient);
-                _loadSnapshot(patient);
-              },
+                    )
+                    .toList(),
+                onChanged: (patient) {
+                  if (patient == null) return;
+                  setState(() => _selectedPatient = patient);
+                  _loadSnapshot(patient);
+                },
+              ),
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: DashboardColors.inkMuted),
+              onPressed: () => _loadSnapshot(_selectedPatient!),
             ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-            onPressed: () => _loadSnapshot(_selectedPatient!),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// A slow breathing dot next to the "synced Xs ago" label — the same
+// visual shorthand as a "live" badge on a broadcast or monitoring
+// dashboard, reinforcing that the number beside it is still ticking, not
+// a screenshot.
+class _LivePulseDot extends StatefulWidget {
+  const _LivePulseDot();
+
+  @override
+  State<_LivePulseDot> createState() => _LivePulseDotState();
+}
+
+class _LivePulseDotState extends State<_LivePulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween(begin: 0.35, end: 1.0).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      ),
+      child: Container(
+        width: 7,
+        height: 7,
+        decoration: const BoxDecoration(
+          color: DashboardColors.live,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }

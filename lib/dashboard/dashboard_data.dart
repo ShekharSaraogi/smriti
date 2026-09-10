@@ -30,6 +30,30 @@ class GameSummary {
   });
 }
 
+// One row straight out of game_sessions, close to unmodified — the point
+// of surfacing this alongside the aggregated stats is to show a caregiver
+// (and anyone watching over their shoulder) the actual individual events
+// arriving from the phone, not just numbers that have already been
+// averaged away.
+class SessionEntry {
+  final String gameType;
+  final int difficultyTier;
+  final double accuracy; // 0-1
+  final double responseTimeSeconds;
+  final int correctAnswers;
+  final int totalAnswers;
+  final DateTime timestamp;
+  const SessionEntry({
+    required this.gameType,
+    required this.difficultyTier,
+    required this.accuracy,
+    required this.responseTimeSeconds,
+    required this.correctAnswers,
+    required this.totalAnswers,
+    required this.timestamp,
+  });
+}
+
 class ReminderInfo {
   final String type;
   final DateTime scheduledTime;
@@ -50,6 +74,11 @@ class DashboardSnapshot {
   final List<GameSummary> gameSummaries;
   final List<ReminderInfo> upcomingReminders;
   final List<ReminderInfo> missedReminders;
+  // Newest first, capped at 15 — the individual events behind the
+  // aggregated numbers above, so the dashboard can show a live activity
+  // feed rather than only pre-averaged stats.
+  final List<SessionEntry> recentActivity;
+  final DateTime fetchedAt;
   const DashboardSnapshot({
     required this.patient,
     required this.dayStreak,
@@ -59,6 +88,8 @@ class DashboardSnapshot {
     required this.gameSummaries,
     required this.upcomingReminders,
     required this.missedReminders,
+    required this.recentActivity,
+    required this.fetchedAt,
   });
 }
 
@@ -188,6 +219,26 @@ class DashboardDataService {
       (info.isMissed ? missedReminders : upcomingReminders).add(info);
     }
 
+    // Tolerant of missing fields (e.g. handwritten test fixtures, or any
+    // legacy row from before a column existed) — this feed is a nice-to-
+    // have activity view, not something that should crash the whole
+    // dashboard over one incomplete row.
+    final recentActivity = sessions.reversed
+        .take(15)
+        .map(
+          (s) => SessionEntry(
+            gameType: s['game_type'] as String,
+            difficultyTier: (s['difficulty_tier'] as num?)?.toInt() ?? 1,
+            accuracy: (s['accuracy'] as num?)?.toDouble() ?? 0,
+            responseTimeSeconds:
+                (s['response_time_seconds'] as num?)?.toDouble() ?? 0,
+            correctAnswers: (s['correct_answers'] as num?)?.toInt() ?? 0,
+            totalAnswers: (s['total_answers'] as num?)?.toInt() ?? 0,
+            timestamp: DateTime.parse(s['timestamp'] as String),
+          ),
+        )
+        .toList();
+
     return DashboardSnapshot(
       patient: patient,
       dayStreak: _computeStreak(sessionDays, today),
@@ -199,6 +250,8 @@ class DashboardDataService {
       gameSummaries: gameSummaries,
       upcomingReminders: upcomingReminders,
       missedReminders: missedReminders,
+      recentActivity: recentActivity,
+      fetchedAt: now ?? DateTime.now(),
     );
   }
 

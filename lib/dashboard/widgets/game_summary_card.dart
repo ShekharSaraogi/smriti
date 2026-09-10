@@ -28,52 +28,32 @@ class GameSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 18),
-              ),
-              const SizedBox(width: 10),
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: DashboardColors.ink,
-                  ),
+                  style: DashboardTextStyles.title,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                summary.sessionsLast7Days == 0 ? '—' : '$accuracyPercent%',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: DashboardColors.ink,
-                ),
+                summary.sessionsLast7Days == 0 ? '—' : '$accuracyPercent',
+                style: DashboardTextStyles.mono.copyWith(fontSize: 22),
               ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  'Level ${summary.currentTier}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: DashboardColors.inkMuted,
-                    fontWeight: FontWeight.w500,
-                  ),
+              if (summary.sessionsLast7Days != 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2, left: 2),
+                  child: Text('%', style: DashboardTextStyles.monoSmall),
                 ),
-              ),
+              const Spacer(),
+              Text('Lv ${summary.currentTier}', style: DashboardTextStyles.monoSmall),
             ],
           ),
           const SizedBox(height: 4),
@@ -82,10 +62,7 @@ class GameSummaryCard extends StatelessWidget {
                 ? 'No rounds this week'
                 : '${summary.sessionsLast7Days} round'
                     '${summary.sessionsLast7Days == 1 ? '' : 's'} this week',
-            style: const TextStyle(
-              fontSize: 12,
-              color: DashboardColors.inkMuted,
-            ),
+            style: DashboardTextStyles.bodyMuted,
           ),
           const SizedBox(height: 10),
           ClipRRect(
@@ -97,8 +74,8 @@ class GameSummaryCard extends StatelessWidget {
               builder: (context, animatedFraction, child) =>
                   LinearProgressIndicator(
                 value: animatedFraction,
-                minHeight: 6,
-                backgroundColor: color.withValues(alpha: 0.12),
+                minHeight: 4,
+                backgroundColor: DashboardColors.border,
                 valueColor: AlwaysStoppedAnimation(color),
               ),
             ),

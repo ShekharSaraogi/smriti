@@ -24,39 +24,33 @@ class StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(height: 16),
-          // Counts up from 0 on first paint rather than just appearing —
-          // a small, standard touch that makes a stats dashboard feel
-          // alive instead of static, especially the first moment it loads.
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: value.toDouble()),
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOutCubic,
-            builder: (context, animatedValue, child) => Text(
-              '${animatedValue.round()}$suffix',
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: DashboardColors.ink,
-                height: 1.1,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: DashboardTextStyles.label,
               ),
-            ),
+              Icon(icon, color: color, size: 16),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              color: DashboardColors.inkMuted,
-              fontWeight: FontWeight.w500,
+          const SizedBox(height: 12),
+          // Counts up from 0 on first paint — a small, standard touch that
+          // makes the number feel measured rather than printed. Wrapped in
+          // a FittedBox so a card squeezed narrower than ideal (a small
+          // window, a phone browser) shrinks the number instead of
+          // overflowing the card.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: value.toDouble()),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (context, animatedValue, child) => Text(
+                '${animatedValue.round()}$suffix',
+                style: DashboardTextStyles.mono.copyWith(color: color),
+              ),
             ),
           ),
         ],
