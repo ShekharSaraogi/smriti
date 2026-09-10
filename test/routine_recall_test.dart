@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:smriti/db/database_helper.dart';
 import 'package:smriti/screens/routine_recall_screen.dart';
+import 'package:smriti/widgets/routine_choice_card.dart';
 
 const _routine = [
   'Wake up',
@@ -30,13 +31,13 @@ Future<void> _seedRoutine(WidgetTester tester, List<String> steps) async {
   });
 }
 
-/// The visible label of the Nth ElevatedButton on screen. Each button's
-/// child is a Row of [emoji, label] (see RoutineRecallScreen), so the
-/// label is the last Text descendant rather than the button's own child.
-String _buttonLabel(WidgetTester tester, int index) {
+/// The visible label of the Nth answer choice card on screen. Each card
+/// has an emoji Text plus a label Text (see RoutineChoiceCard), so the
+/// label is the last Text descendant.
+String _choiceLabel(WidgetTester tester, int index) {
   final texts = tester.widgetList<Text>(
     find.descendant(
-      of: find.byType(ElevatedButton).at(index),
+      of: find.byType(RoutineChoiceCard).at(index),
       matching: find.byType(Text),
     ),
   );
@@ -81,7 +82,7 @@ void main() {
     await _pumpGame(tester);
 
     expect(find.textContaining('Round 1 of'), findsOneWidget);
-    expect(find.byType(ElevatedButton), findsNWidgets(3));
+    expect(find.byType(RoutineChoiceCard), findsNWidgets(3));
   });
 
   testWidgets(
@@ -96,22 +97,19 @@ void main() {
       final promptText = tester.widget<Text>(promptFinder).data!;
       final promptStep = _routine.firstWhere((s) => promptText.contains(s));
 
-      // Each button's child is now a Row of [emoji, label] rather than a
-      // bare Text, so the label is read back as the last Text descendant
-      // of each button instead of casting the button's child directly.
-      final buttonCount = find.byType(ElevatedButton).evaluate().length;
-      final choiceButtons = [
-        for (var i = 0; i < buttonCount; i++) _buttonLabel(tester, i),
+      final choiceCount = find.byType(RoutineChoiceCard).evaluate().length;
+      final choiceLabels = [
+        for (var i = 0; i < choiceCount; i++) _choiceLabel(tester, i),
       ];
       expect(
-        choiceButtons,
+        choiceLabels,
         isNot(contains(promptStep)),
         reason: 'Prompt "$promptStep" should not appear as one of its '
             'own answer choices',
       );
 
       final correctAnswer = _routine[_routine.indexOf(promptStep) + 1];
-      await tester.tap(find.widgetWithText(ElevatedButton, correctAnswer));
+      await tester.tap(find.widgetWithText(RoutineChoiceCard, correctAnswer));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1050));
     }
@@ -138,7 +136,7 @@ void main() {
     final promptStep = _routine.firstWhere((s) => promptText.contains(s));
     final correctAnswer = _routine[_routine.indexOf(promptStep) + 1];
 
-    await tester.tap(find.widgetWithText(ElevatedButton, correctAnswer));
+    await tester.tap(find.widgetWithText(RoutineChoiceCard, correctAnswer));
     await tester.pump();
 
     expect(find.text('Correct!'), findsOneWidget);
@@ -161,7 +159,7 @@ void main() {
       final promptStep = _routine.firstWhere((s) => promptText.contains(s));
       final correctAnswer = _routine[_routine.indexOf(promptStep) + 1];
 
-      await tester.tap(find.widgetWithText(ElevatedButton, correctAnswer));
+      await tester.tap(find.widgetWithText(RoutineChoiceCard, correctAnswer));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1050));
     }

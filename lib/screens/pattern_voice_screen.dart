@@ -10,6 +10,8 @@ import '../l10n/app_strings.dart';
 import '../l10n/locale_controller.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/game_header.dart';
+import '../widgets/result_dialog.dart';
 
 class PatternVoiceScreen extends StatefulWidget {
   const PatternVoiceScreen({super.key});
@@ -21,14 +23,14 @@ class PatternVoiceScreen extends StatefulWidget {
 class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
   // Keys, not literal English text — the button label AND the word speech
   // recognition compares against both come from AppStrings.t(key), so they
-  // always match whatever language is currently selected. Emoji instead of
-  // line icons for the same reason as the other games: a real, colorful
-  // picture of the object is easier to recognize and name than an abstract
-  // outline.
+  // always match whatever language is currently selected. Real photos
+  // instead of icons/emoji: naming an actual cow or a real flame is a more
+  // meaningful recognition exercise than naming a generic pictogram.
   static const _prompts = [
-    {'key': 'object_flower', 'emoji': '🌸'},
-    {'key': 'object_umbrella', 'emoji': '☂️'},
-    {'key': 'object_bird', 'emoji': '🐦'},
+    {'key': 'object_cow', 'image': 'assets/images/cow.jpg'},
+    {'key': 'object_rooster', 'image': 'assets/images/rooster.webp'},
+    {'key': 'object_fire', 'image': 'assets/images/fire.jpg'},
+    {'key': 'object_water', 'image': 'assets/images/water.jpg'},
   ];
 
   // Best-effort locale codes for the phone's own TTS/speech-recognition
@@ -91,17 +93,24 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
   }
 
   // More rounds at higher tiers — same tier+2 formula as Memory Match, so
-  // it's the same number to explain either way. With only 3 real prompts to
-  // draw from, higher tiers repeat them rather than needing new content.
+  // it's the same number to explain either way. With only 4 real prompts to
+  // draw from, higher tiers repeat them — but never twice in a row: each
+  // "bag" below is a full shuffled pass through every prompt once, so a
+  // repeat can only happen after all of them have appeared, and the
+  // boundary between one bag and the next is fixed up so the same prompt
+  // can't land on both sides of the seam either.
   List<Map<String, dynamic>> _buildRoundOrder() {
     final roundCount = (_currentTier + 2).clamp(3, 7);
     final order = <Map<String, dynamic>>[];
     while (order.length < roundCount) {
-      order.addAll(_prompts);
+      final bag = List<Map<String, dynamic>>.of(_prompts)..shuffle();
+      if (order.isNotEmpty && bag.length > 1 && bag.first == order.last) {
+        final repeated = bag.removeAt(0);
+        bag.insert(1, repeated);
+      }
+      order.addAll(bag);
     }
-    final rounds = order.sublist(0, roundCount);
-    rounds.shuffle();
-    return rounds;
+    return order.sublist(0, roundCount);
   }
 
   Future<void> _loadRealTier() async {
@@ -218,43 +227,30 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
   }
 
   void _showCompleteDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppStrings.t('well_done_title')),
-        content: Text(
-          AppStrings.t('correct_of_total_message', {
-            'correct': '$_correctCount',
-            'total': '$_totalAttempts',
-          }),
-          style: const TextStyle(fontSize: 18),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              setState(() {
-                _roundOrder = _buildRoundOrder();
-                _roundIndex = 0;
-                _correctCount = 0;
-                _totalAttempts = 0;
-                _totalResponseSeconds = 0;
-                _feedback = null;
-                _roundStartedAt = DateTime.now();
-              });
-              _tts.speak(AppStrings.t('question_spoken'));
-              // This round's result may have just shifted the tier — check
-              // again for next round, same as on first load.
-              _loadRealTier();
-            },
-            child: Text(
-              AppStrings.t('play_again_button'),
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+    showResultDialog(
+      context,
+      title: AppStrings.t('well_done_title'),
+      message: AppStrings.t('correct_of_total_message', {
+        'correct': '$_correctCount',
+        'total': '$_totalAttempts',
+      }),
+      actionLabel: AppStrings.t('play_again_button'),
+      accent: AppColors.highlight,
+      onAction: () {
+        setState(() {
+          _roundOrder = _buildRoundOrder();
+          _roundIndex = 0;
+          _correctCount = 0;
+          _totalAttempts = 0;
+          _totalResponseSeconds = 0;
+          _feedback = null;
+          _roundStartedAt = DateTime.now();
+        });
+        _tts.speak(AppStrings.t('question_spoken'));
+        // This round's result may have just shifted the tier — check
+        // again for next round, same as on first load.
+        _loadRealTier();
+      },
     );
   }
 
@@ -276,22 +272,28 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Text(
-              '${AppStrings.t('round_progress', {
+            GameHeader(
+              accent: AppColors.highlight,
+              progressText: '${AppStrings.t('round_progress', {
                     'n': '${_roundIndex + 1}',
                     'total': '${_roundOrder.length}',
                   })}  •  ${AppStrings.t('level_label', {
                     'tier': '$_currentTier',
                   })}',
-              style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 24),
-            Text(prompt['emoji'] as String, style: const TextStyle(fontSize: 100)),
-            const SizedBox(height: 24),
-            Text(
-              AppStrings.t('question_spoken'),
-              style: const TextStyle(fontSize: 22),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Image.asset(
+                prompt['image'] as String,
+                width: 220,
+                height: 220,
+                fit: BoxFit.cover,
+                cacheWidth: 440,
+              ),
             ),
+            const SizedBox(height: 24),
+            Text(AppStrings.t('question_spoken'), style: AppTextStyles.bodyLarge),
             const SizedBox(height: 24),
             Wrap(
               spacing: 12,
@@ -299,10 +301,7 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
               alignment: WrapAlignment.center,
               children: _prompts.map((choice) {
                 return ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(140, 56),
-                    textStyle: const TextStyle(fontSize: 18),
-                  ),
+                  style: ElevatedButton.styleFrom(minimumSize: const Size(140, 56)),
                   onPressed: canAnswer
                       ? () => _handleAnswer(choice['key'] == prompt['key'])
                       : null,
@@ -311,14 +310,11 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
               }).toList(),
             ),
             const SizedBox(height: 32),
-            Text(
-              AppStrings.t('voice_hint'),
-              style: const TextStyle(fontSize: 16),
-            ),
+            Text(AppStrings.t('voice_hint'), style: AppTextStyles.bodyMuted),
             const SizedBox(height: 8),
             IconButton(
               iconSize: 64,
-              color: _isListening ? Colors.red : AppColors.primary,
+              color: _isListening ? AppColors.error : AppColors.sageDark,
               icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
               onPressed: canAnswer && _speechAvailable
                   ? _startListening
@@ -329,7 +325,7 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   AppStrings.t('no_voice_available'),
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  style: AppTextStyles.bodyMuted,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -340,9 +336,11 @@ class _PatternVoiceScreenState extends State<PatternVoiceScreen> {
                   _feedback == 'correct'
                       ? AppStrings.t('correct_feedback')
                       : AppStrings.t('feedback_wrong_next'),
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: _feedback == 'correct' ? Colors.green : Colors.red,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: _feedback == 'correct'
+                        ? AppColors.sageDark
+                        : AppColors.error,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

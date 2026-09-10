@@ -7,6 +7,8 @@ import '../difficulty/difficulty_engine.dart';
 import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/game_header.dart';
+import '../widgets/result_dialog.dart';
 
 class MemoryMatchScreen extends StatefulWidget {
   const MemoryMatchScreen({super.key});
@@ -16,21 +18,20 @@ class MemoryMatchScreen extends StatefulWidget {
 }
 
 class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
-  // Everyday objects from a patient's own daily routine, not abstract
-  // shapes — recognizing a real cup or a real medicine bottle is the
-  // actual cognitive skill this game is meant to exercise, and it's more
-  // engaging to look at than a generic star or anchor. 8 is enough
-  // headroom for the hardest tier (5 + 2 = 7 pairs); adding a tier later
-  // only means adding another emoji here, nothing else changes.
+  // Real photos of wildlife and everyday life from the region, not
+  // abstract shapes — recognizing an actual elephant or rhino is a more
+  // meaningful and engaging memory exercise than matching generic icons.
+  // 8 is enough headroom for the hardest tier (5 + 2 = 7 pairs); adding a
+  // tier later only means adding another image path here.
   static const List<String> _symbols = [
-    '☕', // cup
-    '🍽️', // plate
-    '💊', // medicine
-    '🪥', // toothbrush
-    '👕', // shirt
-    '⏰', // clock
-    '📖', // book
-    '🛏️', // bed
+    'assets/images/elephant.jpg',
+    'assets/images/rhino.jpg',
+    'assets/images/butterfly.jpg',
+    'assets/images/hornbill.jpg',
+    'assets/images/gibbon.jpg',
+    'assets/images/tea.jpg',
+    'assets/images/rice.jpg',
+    'assets/images/cow.jpg',
   ];
 
   static const String _gameType = 'memory_match';
@@ -184,35 +185,22 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
 
     final accuracy = (_correctAttempts / _totalAttempts * 100).round();
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppStrings.t('well_done_title')),
-        content: Text(
-          AppStrings.t('memory_match_win_message', {
-            'pairs': '$_pairCount',
-            'attempts': '$_totalAttempts',
-            'percent': '$accuracy',
-          }),
-          style: const TextStyle(fontSize: 18),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              setState(() => _dealBoard());
-              // This round's result may have just shifted the tier — check
-              // again for next round, same as on first load.
-              _loadRealTier();
-            },
-            child: Text(
-              AppStrings.t('play_again_button'),
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+    showResultDialog(
+      context,
+      title: AppStrings.t('well_done_title'),
+      message: AppStrings.t('memory_match_win_message', {
+        'pairs': '$_pairCount',
+        'attempts': '$_totalAttempts',
+        'percent': '$accuracy',
+      }),
+      actionLabel: AppStrings.t('play_again_button'),
+      accent: AppColors.sageDark,
+      onAction: () {
+        setState(() => _dealBoard());
+        // This round's result may have just shifted the tier — check
+        // again for next round, same as on first load.
+        _loadRealTier();
+      },
     );
   }
 
@@ -224,14 +212,14 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              '${AppStrings.t('memory_match_progress', {
+            child: GameHeader(
+              accent: AppColors.sageDark,
+              progressText: '${AppStrings.t('memory_match_progress', {
                     'count': '$_correctAttempts',
                     'total': '$_pairCount',
                   })}  •  ${AppStrings.t('level_label', {
                     'tier': '$_currentTier',
                   })}',
-              style: const TextStyle(fontSize: 18),
             ),
           ),
           Expanded(
@@ -253,38 +241,35 @@ class _MemoryMatchScreenState extends State<MemoryMatchScreen> {
                   onTap: () => _onCardTapped(index),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isMatched
-                          ? Colors.green.shade100
-                          : isFaceUp
-                              ? Colors.white
-                              : AppColors.primary,
+                      color: isMatched ? AppColors.sage : AppColors.sageDark,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isMatched
-                            ? Colors.green.shade400
-                            : AppColors.primaryDark,
-                        width: isFaceUp ? 1 : 2,
-                      ),
+                      border: isMatched
+                          ? Border.all(color: AppColors.sageDark, width: 2)
+                          : null,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.ink.withValues(alpha: 0.12),
+                          color: AppColors.ink.withValues(alpha: 0.15),
                           blurRadius: 6,
                           offset: const Offset(0, 3),
                         ),
                       ],
                     ),
-                    child: Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
                       child: isFaceUp
-                          ? Text(
+                          ? Image.asset(
                               _cards[index],
-                              style: const TextStyle(fontSize: 40),
+                              fit: BoxFit.cover,
+                              cacheWidth: 200,
                             )
-                          : const Text(
-                              '?',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                          : const Center(
+                              child: Text(
+                                '?',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                     ),

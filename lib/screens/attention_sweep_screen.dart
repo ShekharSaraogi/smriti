@@ -8,6 +8,8 @@ import '../difficulty/difficulty_engine.dart';
 import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/game_header.dart';
+import '../widgets/result_dialog.dart';
 
 class AttentionSweepScreen extends StatefulWidget {
   const AttentionSweepScreen({super.key});
@@ -20,19 +22,17 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
   static const String _gameType = 'attention_sweep';
   static const int _totalRounds = 5;
 
-  // (common, odd) real-object pairs to spot the different one among — the
-  // same "find the one that doesn't belong" visual-search task as a plain
-  // circle vs. star, but dressed as recognizable daily objects instead of
-  // abstract shapes. A new pair is picked each round purely for variety;
-  // it has no effect on difficulty, which still comes entirely from
-  // _cellCountForTier/_timeLimitForTier below.
+  // (common, odd) real-photo pairs to spot the different one among — the
+  // same "find the one that doesn't belong" visual-search task, but with
+  // recognizable real photos instead of abstract shapes. A new pair is
+  // picked each round purely for variety; it has no effect on difficulty,
+  // which still comes entirely from _cellCountForTier/_timeLimitForTier
+  // below.
   static const List<List<String>> _objectPairs = [
-    ['☕', '🍵'],
-    ['🍎', '🍊'],
-    ['👟', '🥿'],
-    ['🌞', '🌙'],
-    ['🐶', '🐱'],
-    ['🚗', '🚕'],
+    ['assets/images/elephant.jpg', 'assets/images/rhino.jpg'],
+    ['assets/images/butterfly.jpg', 'assets/images/hornbill.jpg'],
+    ['assets/images/gibbon.jpg', 'assets/images/cow.jpg'],
+    ['assets/images/tea.jpg', 'assets/images/rice.jpg'],
   ];
 
   int? _patientId;
@@ -44,6 +44,10 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
   int _cellCount = 4;
   int _oddCellIndex = 0;
   List<String> _currentPair = _objectPairs.first;
+  // A shuffled queue of pairs, consumed one per round — every pair shows
+  // once before any of them repeat, rather than each round picking
+  // independently at random (which could show the same pair back-to-back).
+  final List<List<String>> _pairQueue = [];
   int _timeLeft = 8;
   Timer? _countdownTimer;
   String? _feedback; // 'correct', 'wrong', or null while awaiting a tap
@@ -82,11 +86,26 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
     }
   }
 
+  // Refills the queue with a freshly shuffled pass through every pair once
+  // it runs out, fixing up the boundary so the last pair of the old
+  // shuffle can't immediately repeat as the first pair of the new one.
+  List<String> _nextPair() {
+    if (_pairQueue.isEmpty) {
+      _pairQueue.addAll(_objectPairs);
+      _pairQueue.shuffle(_random);
+      if (_pairQueue.length > 1 && _pairQueue.first == _currentPair) {
+        final repeated = _pairQueue.removeAt(0);
+        _pairQueue.insert(1, repeated);
+      }
+    }
+    return _pairQueue.removeAt(0);
+  }
+
   void _dealRound() {
     _countdownTimer?.cancel();
     _cellCount = _cellCountForTier(_currentTier);
     _oddCellIndex = _random.nextInt(_cellCount);
-    _currentPair = _objectPairs[_random.nextInt(_objectPairs.length)];
+    _currentPair = _nextPair();
     _timeLeft = _timeLimitForTier(_currentTier);
     _feedback = null;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -147,38 +166,25 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
   }
 
   void _showCompleteDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppStrings.t('well_done_title')),
-        content: Text(
-          AppStrings.t('correct_of_total_message', {
-            'correct': '$_correctCount',
-            'total': '$_totalAttempts',
-          }),
-          style: const TextStyle(fontSize: 18),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              setState(() {
-                _roundIndex = 0;
-                _correctCount = 0;
-                _totalAttempts = 0;
-                _sessionStartedAt = DateTime.now();
-                _dealRound();
-              });
-              _loadRealTier();
-            },
-            child: Text(
-              AppStrings.t('play_again_button'),
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+    showResultDialog(
+      context,
+      title: AppStrings.t('well_done_title'),
+      message: AppStrings.t('correct_of_total_message', {
+        'correct': '$_correctCount',
+        'total': '$_totalAttempts',
+      }),
+      actionLabel: AppStrings.t('play_again_button'),
+      accent: AppColors.sageDark,
+      onAction: () {
+        setState(() {
+          _roundIndex = 0;
+          _correctCount = 0;
+          _totalAttempts = 0;
+          _sessionStartedAt = DateTime.now();
+          _dealRound();
+        });
+        _loadRealTier();
+      },
     );
   }
 
@@ -198,27 +204,28 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text(
-              '${AppStrings.t('round_progress', {
+            GameHeader(
+              accent: AppColors.sageDark,
+              progressText: '${AppStrings.t('round_progress', {
                     'n': '${_roundIndex + 1}',
                     'total': '$_totalRounds',
                   })}  •  ${AppStrings.t('level_label', {
                     'tier': '$_currentTier',
                   })}',
-              style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 8),
             Text(
               AppStrings.t('time_left_label', {'seconds': '$_timeLeft'}),
-              style: TextStyle(
-                fontSize: 20,
-                color: _timeLeft <= 2 ? Colors.red : Colors.black87,
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: _timeLeft <= 2 ? AppColors.error : AppColors.inkMuted,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 16),
             Text(
               AppStrings.t('attention_sweep_instruction'),
-              style: const TextStyle(fontSize: 20),
+              style: AppTextStyles.bodyLarge,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -239,16 +246,15 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
                         : null,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
+                        border: Border.all(color: AppColors.sage, width: 2),
                       ),
-                      child: Center(
-                        child: Text(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset(
                           isOdd ? _currentPair[1] : _currentPair[0],
-                          style: const TextStyle(fontSize: 40),
+                          fit: BoxFit.cover,
+                          cacheWidth: 200,
                         ),
                       ),
                     ),
@@ -265,9 +271,11 @@ class _AttentionSweepScreenState extends State<AttentionSweepScreen> {
                       : _feedback == 'timeout'
                           ? AppStrings.t('feedback_timeout')
                           : AppStrings.t('feedback_wrong_next'),
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: _feedback == 'correct' ? Colors.green : Colors.red,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: _feedback == 'correct'
+                        ? AppColors.sageDark
+                        : AppColors.error,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

@@ -3,25 +3,36 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:smriti/screens/memory_match_screen.dart';
 
-const List<String> _symbols = ['☕', '🍽️', '💊'];
+const List<String> _symbols = [
+  'assets/images/elephant.jpg',
+  'assets/images/rhino.jpg',
+  'assets/images/butterfly.jpg',
+];
 
 Finder _card(int index) => find.byKey(ValueKey('card_$index'));
 
+/// Image.asset's cacheWidth wraps the AssetImage in a ResizeImage — this
+/// unwraps that to get to the actual asset path either way.
+String _assetNameOf(ImageProvider provider) {
+  if (provider is ResizeImage) return _assetNameOf(provider.imageProvider);
+  return (provider as AssetImage).assetName;
+}
+
 /// How many card faces are currently showing a picture (as opposed to the
-/// face-down "?" mark).
+/// face-down "?" mark, which is plain Text rather than an Image).
 int _visibleFaces(WidgetTester tester) {
   return tester
-      .widgetList<Text>(find.byType(Text))
-      .where((text) => _symbols.contains(text.data))
+      .widgetList<Image>(find.byType(Image))
+      .where((image) => _symbols.contains(_assetNameOf(image.image)))
       .length;
 }
 
 /// The picture on a face-up card.
 String _symbolAt(WidgetTester tester, int index) {
-  final text = tester.widget<Text>(
-    find.descendant(of: _card(index), matching: find.byType(Text)),
+  final image = tester.widget<Image>(
+    find.descendant(of: _card(index), matching: find.byType(Image)),
   );
-  return text.data!;
+  return _assetNameOf(image.image);
 }
 
 Future<void> _pumpGame(WidgetTester tester) async {

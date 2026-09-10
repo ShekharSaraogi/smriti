@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:smriti/db/database_helper.dart';
 import 'package:smriti/screens/attention_sweep_screen.dart';
 
 Finder _cell(int index) => find.byKey(ValueKey('cell_$index'));
 
 Future<void> _pumpGame(WidgetTester tester) async {
+  // The FFI test database persists across runs, and this file never
+  // cleared its own history the way reminders/routine tests do — accuracy
+  // logged by earlier runs eventually pushes the default patient's
+  // attention_sweep tier above 1, which changes the cell count these tests
+  // hardcode. Clearing it first keeps every test starting from tier 1.
+  await tester.runAsync(
+    () => DatabaseHelper.instance.database.then(
+      (db) => db.delete('game_sessions', where: "game_type = 'attention_sweep'"),
+    ),
+  );
   await tester.pumpWidget(
     const MaterialApp(home: AttentionSweepScreen()),
   );
@@ -20,27 +31,36 @@ Future<void> _pumpGame(WidgetTester tester) async {
   await tester.pump();
 }
 
+/// Image.asset's cacheWidth wraps the AssetImage in a ResizeImage — this
+/// unwraps that to get to the actual asset path either way.
+String _assetNameOf(ImageProvider provider) {
+  if (provider is ResizeImage) return _assetNameOf(provider.imageProvider);
+  return (provider as AssetImage).assetName;
+}
+
 /// Finds which cell is currently the odd one out. Each round uses a
-/// different real-object pair (see AttentionSweepScreen._objectPairs), so
-/// rather than hardcoding one emoji, this finds the cell whose picture
-/// differs from the majority — same idea as a player visually scanning
-/// the grid for the one that doesn't match the rest.
+/// different real-photo pair (see AttentionSweepScreen._objectPairs), so
+/// rather than hardcoding one asset path, this finds the cell whose
+/// picture differs from the majority — same idea as a player visually
+/// scanning the grid for the one that doesn't match the rest.
 int _findOddCell(WidgetTester tester, int cellCount) {
-  final textByIndex = <int, String>{
+  final assetByIndex = <int, String>{
     for (var i = 0; i < cellCount; i++)
-      i: tester
-          .widget<Text>(
-            find.descendant(of: _cell(i), matching: find.byType(Text)),
-          )
-          .data!,
+      i: _assetNameOf(
+        tester
+            .widget<Image>(
+              find.descendant(of: _cell(i), matching: find.byType(Image)),
+            )
+            .image,
+      ),
   };
   final counts = <String, int>{};
-  for (final text in textByIndex.values) {
-    counts[text] = (counts[text] ?? 0) + 1;
+  for (final asset in assetByIndex.values) {
+    counts[asset] = (counts[asset] ?? 0) + 1;
   }
-  final oddText =
+  final oddAsset =
       counts.entries.firstWhere((entry) => entry.value == 1).key;
-  return textByIndex.entries.firstWhere((e) => e.value == oddText).key;
+  return assetByIndex.entries.firstWhere((e) => e.value == oddAsset).key;
 }
 
 void main() {

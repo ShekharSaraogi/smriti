@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../db/database_helper.dart';
 import '../l10n/app_strings.dart';
+import '../theme/app_theme.dart';
 import '../utils/routine_visuals.dart';
 
 // Where a caregiver types in the patient's typical daily routine, in
@@ -125,7 +126,7 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
             padding: const EdgeInsets.all(16),
             child: Text(
               AppStrings.t('routine_entry_helper'),
-              style: const TextStyle(fontSize: 16),
+              style: AppTextStyles.body,
             ),
           ),
           Expanded(
@@ -134,44 +135,52 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
               itemCount: _controllers.length,
               itemBuilder: (context, index) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Text(
-                        '${index + 1}.',
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(width: 8),
-                      // Live preview of the picture this step will show in
-                      // Routine Recall — lets the caregiver see right away
-                      // that "Take morning medicine" becomes a pill icon,
-                      // and reword it if the picture doesn't feel right.
-                      AnimatedBuilder(
-                        animation: _controllers[index],
-                        builder: (context, _) => Text(
-                          routineStepEmoji(_controllers[index].text),
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          key: ValueKey('routine_step_$index'),
-                          controller: _controllers[index],
-                          style: const TextStyle(fontSize: 18),
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            isDense: true,
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Text('${index + 1}.', style: AppTextStyles.title),
+                        const SizedBox(width: 8),
+                        // Live preview of the picture this step will show
+                        // in Routine Recall — lets the caregiver see right
+                        // away that "Take morning medicine" becomes a pill
+                        // icon, and reword it if the picture doesn't feel
+                        // right.
+                        AnimatedBuilder(
+                          animation: _controllers[index],
+                          builder: (context, _) => Text(
+                            routineStepEmoji(_controllers[index].text),
+                            style: const TextStyle(fontSize: 22),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: _controllers.length > 1
-                            ? () => _removeStep(index)
-                            : null,
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            key: ValueKey('routine_step_$index'),
+                            controller: _controllers[index],
+                            style: AppTextStyles.body,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: _controllers.length > 1
+                              ? () => _removeStep(index)
+                              : null,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -182,7 +191,7 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _saveError!,
-                style: const TextStyle(fontSize: 16, color: Colors.red),
+                style: AppTextStyles.body.copyWith(color: AppColors.error),
               ),
             ),
           Padding(
@@ -192,20 +201,14 @@ class _RoutineEntryScreenState extends State<RoutineEntryScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _addStep,
-                    child: Text(
-                      AppStrings.t('add_step_button'),
-                      style: const TextStyle(fontSize: 18),
-                    ),
+                    child: Text(AppStrings.t('add_step_button')),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _save,
-                    child: Text(
-                      AppStrings.t('save_button'),
-                      style: const TextStyle(fontSize: 18),
-                    ),
+                    child: Text(AppStrings.t('save_button')),
                   ),
                 ),
               ],

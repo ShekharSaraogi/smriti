@@ -8,7 +8,11 @@ import '../db/database_helper.dart';
 import '../difficulty/difficulty_engine.dart';
 import '../l10n/app_strings.dart';
 import '../sync/sync_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/routine_visuals.dart';
+import '../widgets/game_header.dart';
+import '../widgets/result_dialog.dart';
+import '../widgets/routine_choice_card.dart';
 import 'routine_entry_screen.dart';
 
 // Quizzes the patient on the order of their own daily routine: "after
@@ -198,32 +202,19 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
   }
 
   void _showCompleteDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppStrings.t('well_done_title')),
-        content: Text(
-          AppStrings.t('correct_of_total_message', {
-            'correct': '$_correctCount',
-            'total': '$_totalAttempts',
-          }),
-          style: const TextStyle(fontSize: 18),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              setState(_dealRound);
-              _loadRealTier();
-            },
-            child: Text(
-              AppStrings.t('play_again_button'),
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+    showResultDialog(
+      context,
+      title: AppStrings.t('well_done_title'),
+      message: AppStrings.t('correct_of_total_message', {
+        'correct': '$_correctCount',
+        'total': '$_totalAttempts',
+      }),
+      actionLabel: AppStrings.t('play_again_button'),
+      accent: AppColors.highlight,
+      onAction: () {
+        setState(_dealRound);
+        _loadRealTier();
+      },
     );
   }
 
@@ -255,16 +246,17 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const Text('📋', style: TextStyle(fontSize: 64)),
+                const SizedBox(height: 16),
                 Text(
                   AppStrings.t('routine_recall_not_set_up'),
-                  style: const TextStyle(fontSize: 18),
+                  style: AppTextStyles.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(240, 64),
-                    textStyle: const TextStyle(fontSize: 20),
                   ),
                   onPressed: _goToRoutineEntry,
                   child: Text(AppStrings.t('set_up_routine_button')),
@@ -288,16 +280,16 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Text(
-              '${AppStrings.t('round_progress', {
+            GameHeader(
+              accent: AppColors.highlight,
+              progressText: '${AppStrings.t('round_progress', {
                     'n': '${_roundIndex + 1}',
                     'total': '${_roundOrder.length}',
                   })}  •  ${AppStrings.t('level_label', {
                     'tier': '$_currentTier',
                   })}',
-              style: const TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             // The picture for the step already being asked about — a real
             // daily-schedule cue, not decoration, so the patient can
             // recognize it even on a day reading is hard.
@@ -313,35 +305,17 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
               AppStrings.t('routine_recall_prompt', {
                 'step': _currentPromptStep,
               }),
-              style: const TextStyle(fontSize: 22),
+              style: AppTextStyles.bodyLarge,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ..._currentChoices.map(
               (choice) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(0, 64),
-                      textStyle: const TextStyle(fontSize: 18),
-                    ),
-                    onPressed: canAnswer ? () => _handleAnswer(choice) : null,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          routineStepEmoji(choice),
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(choice, textAlign: TextAlign.center),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: RoutineChoiceCard(
+                  emoji: routineStepEmoji(choice),
+                  label: choice,
+                  onTap: canAnswer ? () => _handleAnswer(choice) : null,
                 ),
               ),
             ),
@@ -352,9 +326,11 @@ class _RoutineRecallScreenState extends State<RoutineRecallScreen> {
                   _feedback == 'correct'
                       ? AppStrings.t('correct_feedback')
                       : AppStrings.t('feedback_wrong_next'),
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: _feedback == 'correct' ? Colors.green : Colors.red,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: _feedback == 'correct'
+                        ? AppColors.sageDark
+                        : AppColors.error,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

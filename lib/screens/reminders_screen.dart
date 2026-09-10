@@ -7,6 +7,8 @@ import '../db/database_helper.dart';
 import '../l10n/app_strings.dart';
 import '../notifications/notification_service.dart';
 import '../sync/sync_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/reminder_card.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -23,6 +25,7 @@ class _ReminderType {
   final String key; // stored in the database's 'type' column
   final String labelKey;
   final IconData icon;
+  final Color color;
   final String notificationBodyKey;
   final String snackbarKey;
 
@@ -30,6 +33,7 @@ class _ReminderType {
     required this.key,
     required this.labelKey,
     required this.icon,
+    required this.color,
     required this.notificationBodyKey,
     required this.snackbarKey,
   });
@@ -40,6 +44,7 @@ const _reminderTypes = [
     key: 'medicine',
     labelKey: 'reminder_type_medicine',
     icon: Icons.medication,
+    color: AppColors.highlight,
     notificationBodyKey: 'reminder_notification_body_medicine',
     snackbarKey: 'reminder_set_snackbar_medicine',
   ),
@@ -47,6 +52,7 @@ const _reminderTypes = [
     key: 'hydration',
     labelKey: 'reminder_type_hydration',
     icon: Icons.local_drink,
+    color: AppColors.sage,
     notificationBodyKey: 'reminder_notification_body_hydration',
     snackbarKey: 'reminder_set_snackbar_hydration',
   ),
@@ -54,6 +60,7 @@ const _reminderTypes = [
     key: 'activity',
     labelKey: 'reminder_type_activity',
     icon: Icons.directions_walk,
+    color: AppColors.sageDark,
     notificationBodyKey: 'reminder_notification_body_activity',
     snackbarKey: 'reminder_set_snackbar_activity',
   ),
@@ -61,6 +68,7 @@ const _reminderTypes = [
     key: 'appointment',
     labelKey: 'reminder_type_appointment',
     icon: Icons.event,
+    color: AppColors.highlight,
     notificationBodyKey: 'reminder_notification_body_appointment',
     snackbarKey: 'reminder_set_snackbar_appointment',
   ),
@@ -272,7 +280,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
               AppStrings.t('delete_button'),
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: AppColors.error),
             ),
           ),
         ],
@@ -300,10 +308,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
               onTap: () => Navigator.pop(sheetContext, 'edit'),
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
+              leading: const Icon(Icons.delete, color: AppColors.error),
               title: Text(
                 AppStrings.t('delete_button'),
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppColors.error),
               ),
               onTap: () => Navigator.pop(sheetContext, 'delete'),
             ),
@@ -319,140 +327,153 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.t('reminders_title'))),
-      body: Column(
+  Widget _buildTypeGrid() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 2.4,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 2.4,
-              children: [
-                for (final type in _reminderTypes)
-                  ElevatedButton.icon(
-                    onPressed: () => _setReminder(type),
-                    icon: Icon(type.icon),
-                    label: Text(
+          for (final type in _reminderTypes)
+            ElevatedButton(
+              onPressed: () => _setReminder(type),
+              style: ElevatedButton.styleFrom(backgroundColor: type.color),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(type.icon),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
                       AppStrings.t(type.labelKey),
-                      style: const TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
+                      // 2 lines rather than an ellipsis cutoff — "Daily
+                      // Activity" and "Medical Appointment" both need it at
+                      // this text size, and shrinking the font instead
+                      // would work against the elderly-readability
+                      // requirement.
+                      maxLines: 2,
+                      softWrap: true,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _loadError != null
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            _loadError!,
-                            style: const TextStyle(fontSize: 16),
-                            textAlign: TextAlign.center,
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // One scrollable unit (type-picker + list together) rather than a
+    // fixed-height type-picker above an Expanded list — that split
+    // previously meant a tall enough type-picker or reminder card could
+    // push list content below the visible area with no way to reach it.
+    // A CustomScrollView lets everything scroll as needed instead.
+    return Scaffold(
+      appBar: AppBar(title: Text(AppStrings.t('reminders_title'))),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _buildTypeGrid()),
+          if (_isLoading)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_loadError != null)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    _loadError!,
+                    style: AppTextStyles.body,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            )
+          else if (_reminders.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Text(
+                  AppStrings.t('no_reminders_yet'),
+                  style: AppTextStyles.bodyLarge,
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              sliver: SliverList.separated(
+                itemCount: _reminders.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final reminder = _reminders[index];
+                  final type = _typeFor(reminder['type'] as String);
+                  // The stored string carries an explicit UTC offset
+                  // (e.g. "...+0530"). DateTime.parse alone returns that
+                  // normalized to UTC — its .hour and .minute would be UTC
+                  // clock fields, not the local wall-clock time a person
+                  // actually picked. .toLocal() converts it back to this
+                  // device's own local time before reading those fields.
+                  final scheduledDate = DateTime.parse(
+                    reminder['scheduled_time'] as String,
+                  ).toLocal();
+                  final timeLabel = TimeOfDay.fromDateTime(
+                    scheduledDate,
+                  ).format(context);
+                  final dateLabel =
+                      '${scheduledDate.day}/${scheduledDate.month}';
+                  final rawStatus = reminder['status'] as String;
+                  final status = _displayStatus(rawStatus, scheduledDate);
+                  final statusColor =
+                      status == AppStrings.t('reminder_missed_status')
+                          ? AppColors.error
+                          : status == AppStrings.t('reminder_done_status')
+                              ? AppColors.sageDark
+                              : AppColors.inkMuted;
+                  return ReminderCard(
+                    icon: type.icon,
+                    accent: type.color,
+                    title: AppStrings.t(type.labelKey),
+                    timeLabel: timeLabel,
+                    dateLabel: dateLabel,
+                    statusLabel: status,
+                    statusColor: statusColor,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (rawStatus == 'pending')
+                          TextButton(
+                            onPressed: () =>
+                                _markAsDone(reminder['id'] as int),
+                            child: Text(AppStrings.t('mark_done_button')),
+                          )
+                        else
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppColors.sageDark,
                           ),
+                        IconButton(
+                          icon: const Icon(Icons.more_vert),
+                          onPressed: () => _showReminderOptions(reminder),
                         ),
-                      )
-                : _reminders.isEmpty
-                    ? Center(
-                        child: Text(
-                          AppStrings.t('no_reminders_yet'),
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _reminders.length,
-                        itemBuilder: (context, index) {
-                          final reminder = _reminders[index];
-                          final type = _typeFor(reminder['type'] as String);
-                          // The stored string carries an explicit UTC
-                          // offset (e.g. "...+0530"). DateTime.parse alone
-                          // returns that normalized to UTC — its .hour and
-                          // .minute would be UTC clock fields, not the
-                          // local wall-clock time a person actually picked.
-                          // .toLocal() converts it back to this device's
-                          // own local time before reading those fields.
-                          final scheduledDate = DateTime.parse(
-                            reminder['scheduled_time'] as String,
-                          ).toLocal();
-                          final timeLabel = TimeOfDay.fromDateTime(
-                            scheduledDate,
-                          ).format(context);
-                          final dateLabel =
-                              '${scheduledDate.day}/${scheduledDate.month}';
-                          final rawStatus = reminder['status'] as String;
-                          final status = _displayStatus(
-                            rawStatus,
-                            scheduledDate,
-                          );
-                          return ListTile(
-                            leading: Icon(type.icon, size: 32),
-                            title: Text(
-                              AppStrings.t(type.labelKey),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('$timeLabel  •  $dateLabel'),
-                                Text(
-                                  status,
-                                  style: TextStyle(
-                                    color: status ==
-                                            AppStrings.t(
-                                              'reminder_missed_status',
-                                            )
-                                        ? Colors.red
-                                        : status ==
-                                                AppStrings.t(
-                                                  'reminder_done_status',
-                                                )
-                                            ? Colors.green
-                                            : null,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (rawStatus == 'pending')
-                                  TextButton(
-                                    onPressed: () => _markAsDone(
-                                      reminder['id'] as int,
-                                    ),
-                                    child: Text(
-                                      AppStrings.t('mark_done_button'),
-                                    ),
-                                  )
-                                else
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                  ),
-                                IconButton(
-                                  icon: const Icon(Icons.more_vert),
-                                  onPressed: () =>
-                                      _showReminderOptions(reminder),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );

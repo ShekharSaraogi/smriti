@@ -70,3 +70,16 @@ Reminders,Notification text spoken/shown when an appointment reminder fires,Time
 Reminders,Confirmation pop-up after setting a hydration reminder,Hydration reminder set for {time},,{time} is the chosen time - translate only the surrounding words
 Reminders,Confirmation pop-up after setting an activity reminder,Activity reminder set for {time},,{time} is the chosen time - translate only the surrounding words
 Reminders,Confirmation pop-up after setting an appointment reminder,Appointment reminder set for {time},,{time} is the chosen time - translate only the surrounding words
+Home,Card description under Games,Play a memory or attention game,,
+Home,Card description under Reminders,"Medicine, water, and appointments",,
+Home,Card title for the new Daily Routine shortcut,Daily Routine,,
+Home,Card description under Daily Routine,Set up your everyday steps,,
+Home,Card description under Settings,Language and preferences,,
+Games,Card description under Memory Match,Find the matching pairs,,
+Games,Card description under Pattern & Voice,Name what you see or hear,,
+Games,Card description under Attention Sweep,Spot the one that is different,,
+Games,Card description under Routine Recall,Practice your daily steps,,
+Pattern & Voice,"Object name - patient names a real photo of a cow (replaces the earlier ""Flower"")",Cow,,
+Pattern & Voice,"Object name - patient names a real photo of a rooster (replaces the earlier ""Umbrella"")",Rooster,,
+Pattern & Voice,"Object name - patient names a real photo of fire (replaces the earlier ""Bird"")",Fire,,
+Pattern & Voice,Object name - patient names a real photo of water,Water,,

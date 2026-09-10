@@ -10,14 +10,12 @@ void main() {
     expect(AppStrings.translate('home_games_button', 'as'), 'গেম');
   });
 
-  test('falls back to English when a key has no Assamese translation yet',
-      () {
-    // 'games_attention_sweep_button' was added after the translations
-    // sheet was filled in and has no 'as' entry.
-    expect(
-      AppStrings.translate('games_attention_sweep_button', 'as'),
-      'Attention Sweep',
-    );
+  test('falls back to English for a language with no entry at all', () {
+    // Every real key is now fully translated into English and Assamese,
+    // so this exercises the same fallback with a language that will never
+    // have an entry ('fr'), rather than depending on some specific key
+    // staying untranslated.
+    expect(AppStrings.translate('home_games_button', 'fr'), 'Games');
   });
 
   test('falls back to the raw key when it does not exist at all', () {
