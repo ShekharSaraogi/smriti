@@ -62,7 +62,16 @@ class _SmritiAppState extends State<SmritiApp> {
     return MaterialApp(
       title: AppStrings.t('app_name'),
       theme: AppTheme.light,
-      home: const HomeScreen(),
+      // NOT `const HomeScreen()`: a const widget is the same canonical
+      // instance on every rebuild, and Flutter's element diffing skips
+      // rebuilding a child entirely when the new widget is identical to
+      // the old one — so Home would never re-read AppStrings.t() after
+      // its first build, freezing it in whatever language was active at
+      // launch even as every freshly-pushed screen (Games, Reminders,
+      // Settings — each built fresh by its own MaterialPageRoute) picked
+      // up language changes correctly. A plain (non-const) HomeScreen()
+      // is a new instance each rebuild, so it always gets rebuilt too.
+      home: HomeScreen(),
     );
   }
 }
