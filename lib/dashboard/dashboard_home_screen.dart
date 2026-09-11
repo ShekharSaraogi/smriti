@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_data.dart';
 import 'dashboard_theme.dart';
 import 'widgets/accuracy_trend_chart.dart';
+import 'widgets/cognitive_trend_card.dart';
 import 'widgets/game_summary_card.dart';
 import 'widgets/recent_activity_feed.dart';
 import 'widgets/reminder_section.dart';
@@ -192,6 +193,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              CognitiveTrendCard(trend: snapshot.cognitiveTrend),
+              const SizedBox(height: 16),
               _responsiveCardRow(
                 context,
                 spacing: 16,

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'decline_detector.dart';
+
 class Patient {
   final String id;
   final String name;
@@ -79,6 +81,11 @@ class DashboardSnapshot {
   // feed rather than only pre-averaged stats.
   final List<SessionEntry> recentActivity;
   final DateTime fetchedAt;
+  // The longitudinal signal — is this patient's cognitive performance
+  // trending down, up, or holding steady over the last several weeks.
+  // Distinct from currentTier on each GameSummary above, which only
+  // reflects the difficulty engine's very latest, round-by-round call.
+  final CognitiveTrend cognitiveTrend;
   const DashboardSnapshot({
     required this.patient,
     required this.dayStreak,
@@ -90,6 +97,7 @@ class DashboardSnapshot {
     required this.missedReminders,
     required this.recentActivity,
     required this.fetchedAt,
+    required this.cognitiveTrend,
   });
 }
 
@@ -239,6 +247,21 @@ class DashboardDataService {
         )
         .toList();
 
+    // Unlike recentActivity above (capped at 15, for the feed), the
+    // trend needs the *entire* history to judge weeks of drift — so this
+    // reads from `sessions` directly rather than the capped list above.
+    final cognitiveTrend = DeclineDetector.analyze(
+      [
+        for (final s in sessions)
+          PerformancePoint(
+            timestamp: DateTime.parse(s['timestamp'] as String),
+            difficultyTier: (s['difficulty_tier'] as num?)?.toInt() ?? 1,
+            accuracy: (s['accuracy'] as num?)?.toDouble() ?? 0,
+          ),
+      ],
+      now: now,
+    );
+
     return DashboardSnapshot(
       patient: patient,
       dayStreak: _computeStreak(sessionDays, today),
@@ -252,6 +275,7 @@ class DashboardDataService {
       missedReminders: missedReminders,
       recentActivity: recentActivity,
       fetchedAt: now ?? DateTime.now(),
+      cognitiveTrend: cognitiveTrend,
     );
   }
 
